@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_EGLCORE_H
-#define LEARNOPENGLES_EGLCORE_H
+#ifndef GLMEDIAKIT_EGLCORE_H
+#define GLMEDIAKIT_EGLCORE_H
 
 #include <EGL/egl.h>
 #include <android/native_window_jni.h>
@@ -47,4 +47,4 @@ private:
     EGLContext eglContext;
     EGLConfig eglConfig;
 };
-#endif //LEARNOPENGLES_EGLCORE_H
+#endif //GLMEDIAKIT_EGLCORE_H

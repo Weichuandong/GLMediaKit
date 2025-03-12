@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_IMAGERENDERER_H
-#define LEARNOPENGLES_IMAGERENDERER_H
+#ifndef GLMEDIAKIT_IMAGERENDERER_H
+#define GLMEDIAKIT_IMAGERENDERER_H
 
 #include "IRenderer.h"
 #include <cstdlib>
@@ -44,4 +44,4 @@ private:
     GLuint loadShaders();
 };
 
-#endif //LEARNOPENGLES_IMAGERENDERER_H
+#endif //GLMEDIAKIT_IMAGERENDERER_H

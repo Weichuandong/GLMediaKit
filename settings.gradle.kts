@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LearnOpenGLES"
+rootProject.name = "GLMediaKit"
 include(":app")
  

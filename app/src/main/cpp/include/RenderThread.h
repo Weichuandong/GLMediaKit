@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_RENDERTHREAD_H
-#define LEARNOPENGLES_RENDERTHREAD_H
+#ifndef GLMEDIAKIT_RENDERTHREAD_H
+#define GLMEDIAKIT_RENDERTHREAD_H
 // 添加前向声明
 class EGLManager;
 
@@ -43,4 +43,4 @@ private:
 };
 
 
-#endif //LEARNOPENGLES_RENDERTHREAD_H
+#endif //GLMEDIAKIT_RENDERTHREAD_H

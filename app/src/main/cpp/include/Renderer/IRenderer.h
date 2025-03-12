@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_IRENDERER_H
-#define LEARNOPENGLES_IRENDERER_H
+#ifndef GLMEDIAKIT_IRENDERER_H
+#define GLMEDIAKIT_IRENDERER_H
 
 #include <EGL/egl.h>
 
@@ -25,4 +25,4 @@ public:
 
 };
 
-#endif //LEARNOPENGLES_IRENDERER_H
+#endif //GLMEDIAKIT_IRENDERER_H

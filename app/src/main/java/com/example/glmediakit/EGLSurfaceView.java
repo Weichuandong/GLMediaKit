@@ -1,4 +1,4 @@
-package com.example.learnopengles;
+package com.example.glmediakit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -32,7 +32,7 @@ public class EGLSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     private void init() {
-        System.loadLibrary("learnopengles");
+        System.loadLibrary("GLMediaKit");
 
         // 注册Surface回调
         getHolder().addCallback(this);

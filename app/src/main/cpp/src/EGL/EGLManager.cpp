@@ -10,8 +10,9 @@ EGLManager::EGLManager()
           renderer(nullptr),
           window(nullptr),
           width(0),
-          height(0) {
-    renderThread = new RenderThread();
+          height(0),
+          renderThread(new RenderThread()),
+          surfaceSizeChanged(false){
 }
 
 EGLManager::~EGLManager() {

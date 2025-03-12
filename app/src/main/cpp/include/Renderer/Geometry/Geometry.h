@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_GEOMETRY_H
-#define LEARNOPENGLES_GEOMETRY_H
+#ifndef GLMEDIAKIT_GEOMETRY_H
+#define GLMEDIAKIT_GEOMETRY_H
 
 #include <GLES3/gl3.h>
 #include <android/log.h>
@@ -36,4 +36,4 @@ protected:
     GLuint vbo;
 };
 
-#endif //LEARNOPENGLES_GEOMETRY_H
+#endif //GLMEDIAKIT_GEOMETRY_H

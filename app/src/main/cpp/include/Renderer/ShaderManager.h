@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_SHADERMANAGER_H
-#define LEARNOPENGLES_SHADERMANAGER_H
+#ifndef GLMEDIAKIT_SHADERMANAGER_H
+#define GLMEDIAKIT_SHADERMANAGER_H
 
 #include <GLES3/gl3.h>
 #include <android/log.h>
@@ -27,4 +27,4 @@ private:
     GLuint program;
 
 };
-#endif //LEARNOPENGLES_SHADERMANAGER_H
+#endif //GLMEDIAKIT_SHADERMANAGER_H

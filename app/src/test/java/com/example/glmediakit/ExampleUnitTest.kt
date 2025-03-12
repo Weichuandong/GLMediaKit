@@ -1,4 +1,4 @@
-package com.example.learnopengles
+package com.example.glmediakit
 
 import org.junit.Test
 

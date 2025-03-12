@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/8.
 //
 
-#ifndef LEARNOPENGLES_GLRENDERER_H
-#define LEARNOPENGLES_GLRENDERER_H
+#ifndef GLMEDIAKIT_GLRENDERER_H
+#define GLMEDIAKIT_GLRENDERER_H
 
 #include <GLES3/gl3.h>
 #include <EGL/egl.h>
@@ -48,4 +48,4 @@ private:
     uint16_t mHeight;
 };
 
-#endif //LEARNOPENGLES_GLRENDERER_H
+#endif //GLMEDIAKIT_GLRENDERER_H

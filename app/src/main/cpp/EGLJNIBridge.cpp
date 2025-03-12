@@ -8,7 +8,7 @@
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeInit(JNIEnv *env, jobject thiz) {
+Java_com_example_glmediakit_EGLSurfaceView_nativeInit(JNIEnv *env, jobject thiz) {
     auto *manager = new EGLManager();
     if (!manager->init()) {
         delete manager;
@@ -19,7 +19,7 @@ Java_com_example_learnopengles_EGLSurfaceView_nativeInit(JNIEnv *env, jobject th
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeFinalize(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_EGLSurfaceView_nativeFinalize(JNIEnv *env, jobject thiz,
                                                              jlong handle) {
     if (handle != 0) {
         auto *manager = reinterpret_cast<EGLManager*>(handle);
@@ -29,7 +29,7 @@ Java_com_example_learnopengles_EGLSurfaceView_nativeFinalize(JNIEnv *env, jobjec
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceCreated(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_EGLSurfaceView_nativeSurfaceCreated(JNIEnv *env, jobject thiz,
                                                                    jlong handle, jobject surface) {
     if (handle != 0) {
         auto *manager = reinterpret_cast<EGLManager*>(handle);
@@ -40,7 +40,7 @@ Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceCreated(JNIEnv *env, 
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceChanged(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_EGLSurfaceView_nativeSurfaceChanged(JNIEnv *env, jobject thiz,
                                                                    jlong handle, jint width,
                                                                    jint height) {
     if (handle != 0) {
@@ -51,7 +51,7 @@ Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceChanged(JNIEnv *env, 
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceDestroyed(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_EGLSurfaceView_nativeSurfaceDestroyed(JNIEnv *env, jobject thiz,
                                                                      jlong handle) {
     if (handle != 0) {
         auto *manager = reinterpret_cast<EGLManager*>(handle);
@@ -61,7 +61,7 @@ Java_com_example_learnopengles_EGLSurfaceView_nativeSurfaceDestroyed(JNIEnv *env
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_learnopengles_EGLSurfaceView_nativeSetImage(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_EGLSurfaceView_nativeSetImage(JNIEnv *env, jobject thiz,
                                                              jlong handle, jobject pixels,
                                                              jint width, jint height) {
     if (handle != 0) {

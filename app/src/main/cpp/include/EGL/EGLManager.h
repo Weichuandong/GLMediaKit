@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_EGLMANAGER_H
-#define LEARNOPENGLES_EGLMANAGER_H
+#ifndef GLMEDIAKIT_EGLMANAGER_H
+#define GLMEDIAKIT_EGLMANAGER_H
 
 #include <android/native_window.h>
 #include "EGLCore.h"
@@ -55,4 +55,4 @@ private:
     void release();
 };
 
-#endif //LEARNOPENGLES_EGLMANAGER_H
+#endif //GLMEDIAKIT_EGLMANAGER_H

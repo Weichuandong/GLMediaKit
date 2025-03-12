@@ -1,4 +1,4 @@
-package com.example.learnopengles
+package com.example.glmediakit
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
+import com.example.glmediakit.R
 
 class MainActivity : AppCompatActivity() {
 
@@ -36,11 +37,10 @@ class MainActivity : AppCompatActivity() {
     private fun loadAndShowImage() {
         try {
             // 从资源文件加载图片
-            val bitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_image)
-            currentBitmap = bitmap
+            currentBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_image)
 
             // 设置到EGLSurfaceView
-            eglSurfaceView.setImage(bitmap)
+            eglSurfaceView.setImage(currentBitmap)
 
             // Kotlin中不需要手动回收bitmap，GC会在适当时机回收bitmap
         } catch (e: Exception) {
@@ -55,17 +55,10 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
     }
-    /**
-     * A native method that is implemented by the 'learnopengles' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
 
     companion object {
-        // Used to load the 'learnopengles' library on application startup.
         init {
-            System.loadLibrary("learnopengles")
+            System.loadLibrary("GLMediaKit")
         }
     }
 }

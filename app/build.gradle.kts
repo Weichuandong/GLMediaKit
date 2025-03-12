@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.learnopengles"
+    namespace = "com.example.glmediakit"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.learnopengles"
+        applicationId = "com.example.glmediakit"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

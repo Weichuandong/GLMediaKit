@@ -2,8 +2,8 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef LEARNOPENGLES_TRIANGLE_H
-#define LEARNOPENGLES_TRIANGLE_H
+#ifndef GLMEDIAKIT_TRIANGLE_H
+#define GLMEDIAKIT_TRIANGLE_H
 
 #include "Geometry.h"
 
@@ -21,4 +21,4 @@ public:
 };
 
 
-#endif //LEARNOPENGLES_TRIANGLE_H
+#endif //GLMEDIAKIT_TRIANGLE_H
