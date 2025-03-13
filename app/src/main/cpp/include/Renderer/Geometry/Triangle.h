@@ -11,13 +11,13 @@ class Triangle : public Geometry {
 public:
     void init() override;
 
-    void bind() override;
-
     void draw() override;
 
     const char * getFragmentShaderSource() const override;
 
     const char * getVertexShaderSource() const override;
+
+    void setUniform(GLuint program) const override;
 };
 
 

@@ -43,14 +43,10 @@ void GLRenderer::onDrawFrame() {
         return;
     }
 
-    glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(program);
-
+    geometry->use(program);
+    geometry->setUniform(program);
     geometry->bind();
     geometry->draw();
-
-    // 解绑
-    glBindVertexArray(0);
 }
 
 bool GLRenderer::setGeometry(const std::shared_ptr<Geometry>& geometry_) {

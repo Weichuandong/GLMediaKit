@@ -29,11 +29,16 @@ void Geometry::init() {
 }
 
 void Geometry::bind() {
-
+    glBindVertexArray(vao);
 }
 
 void Geometry::draw() {
 
+}
+
+void Geometry::use(GLuint program) {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(program);
 }
 
 

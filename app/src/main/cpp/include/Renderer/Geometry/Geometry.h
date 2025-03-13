@@ -21,6 +21,8 @@ public:
 
     virtual void init();
 
+    virtual void use(GLuint program);
+
     virtual void bind();
 
     virtual void draw();
@@ -30,6 +32,8 @@ public:
     virtual const char* getVertexShaderSource() const = 0;
 
     virtual const char* getFragmentShaderSource() const = 0;
+
+    virtual void setUniform(GLuint program) const = 0;
 
 protected:
     GLuint vao;
