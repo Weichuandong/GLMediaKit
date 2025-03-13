@@ -42,12 +42,15 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/Geometry/Triangle.cpp
         src/Renderer/Geometry/Square.cpp
         src/Renderer/Geometry/MovingTriangle.cpp
+        src/Renderer/Geometry/RotatingTriangle.cpp
         src/EGL/EGLCore.cpp
         src/EGL/EGLManager.cpp)
 
 ## include
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-        ${CMAKE_SOURCE_DIR}/include)
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/3rdparty/src
+)
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this
