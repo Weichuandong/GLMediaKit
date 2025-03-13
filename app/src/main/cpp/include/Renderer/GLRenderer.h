@@ -15,6 +15,7 @@
 #include "IRenderer.h"
 #include "Geometry/Triangle.h"
 #include "Geometry/Square.h"
+#include "Geometry/MovingTriangle.h"
 
 #define LOG_TAG "GLRenderer"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)

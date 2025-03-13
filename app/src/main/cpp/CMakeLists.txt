@@ -41,6 +41,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/Geometry/Geometry.cpp
         src/Renderer/Geometry/Triangle.cpp
         src/Renderer/Geometry/Square.cpp
+        src/Renderer/Geometry/MovingTriangle.cpp
         src/EGL/EGLCore.cpp
         src/EGL/EGLManager.cpp)
 

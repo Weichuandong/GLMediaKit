@@ -12,8 +12,9 @@ GLRenderer::GLRenderer() :
 }
 
 bool GLRenderer::init() {
-    geometry = std::make_shared<Triangle>();
+//    geometry = std::make_shared<Triangle>();
 //    geometry = std::make_shared<Square>();
+    geometry = std::make_shared<MovingTriangle>();
     geometry->init();
 
     program = shaderManager->createProgram(

@@ -17,7 +17,7 @@ public:
 
     const char * getVertexShaderSource() const override;
 
-    void setUniform(GLuint program) const override;
+    void setUniform(GLuint program) override;
 };
 
 

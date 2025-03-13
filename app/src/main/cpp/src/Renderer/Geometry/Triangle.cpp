@@ -85,6 +85,6 @@ void main() {
 )";
 }
 
-void Triangle::setUniform(GLuint program) const {
+void Triangle::setUniform(GLuint program) {
     glUniform1f(glGetUniformLocation(program, "xOffset"), 0.5);
 }

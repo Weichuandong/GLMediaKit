@@ -7,21 +7,18 @@
 
 #include "Geometry.h"
 
-class Square : public Geometry{
+class Square : public Geometry {
 public:
-    Square() = default;
 
     void init() override;
 
-    void bind() override;
-
     void draw() override;
-
-    void cleanup() override;
 
     const char* getVertexShaderSource() const override;
 
     const char* getFragmentShaderSource() const override;
+
+    void setUniform(GLuint program) override;
 
 private:
     GLuint ebo;

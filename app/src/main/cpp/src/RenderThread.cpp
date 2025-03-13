@@ -83,7 +83,7 @@ void RenderThread::renderLoop() {
         eglCore->swapBuffers(eglSurface);
 
         // 控制帧率
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60fps
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // ~60fps
     }
 
     LOGI("Render loop stopped");

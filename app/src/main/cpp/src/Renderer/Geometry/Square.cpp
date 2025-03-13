@@ -40,15 +40,8 @@ void Square::init() {
     LOGI("Square data prepared");
 }
 
-void Square::bind() {
-    glBindVertexArray(vao);
-}
-
 void Square::draw() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-}
-
-void Square::cleanup() {
 }
 
 const char *Square::getVertexShaderSource() const {
@@ -70,4 +63,6 @@ void main() {
 )";
 }
 
+void Square::setUniform(GLuint program) {
 
+}

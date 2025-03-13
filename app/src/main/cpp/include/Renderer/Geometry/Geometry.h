@@ -33,7 +33,7 @@ public:
 
     virtual const char* getFragmentShaderSource() const = 0;
 
-    virtual void setUniform(GLuint program) const = 0;
+    virtual void setUniform(GLuint program) = 0;
 
 protected:
     GLuint vao;
