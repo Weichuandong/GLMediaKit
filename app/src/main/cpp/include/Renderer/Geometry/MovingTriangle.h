@@ -25,11 +25,18 @@ public:
 private:
     float mTranslationX = 0.0f;
     float mTranslationY = 0.0f;
-    float mSpeedX = 0.5f;
-    float mSpeedY = 0.3f;
+
+    float rOffset = 0.0f;
+    float gOffset = 0.0f;
+    float bOffset = 0.0f;
+
+    float mSpeedX = 0.15f;
+    float mSpeedY = 0.1f;
+    float mColorR = 0.1f;
+    float mColorG = 0.1f;
+    float mColorB = 0.1f;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> mLastTime;
-    float mTotalTime = 0.0f;  // 追踪程序运行的总时间
 };
 
 #endif //GLMEDIAKIT_MOVINGTRIANGLE_H

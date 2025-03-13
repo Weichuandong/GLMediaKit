@@ -8,9 +8,9 @@ void MovingTriangle::init() {
     // 三角形顶点数据
     float vertices[] = {
             // 位置              // 颜色
-            0.0f,  0.15f, 0.0f,  1.0f, 0.0f, 0.0f,  // 顶点
-            -0.15f, -0.15f, 0.0f,  0.0f, 1.0f, 0.0f,  // 左下
-            0.15f, -0.15f, 0.0f,  0.0f, 0.0f, 1.0f   // 右下
+            0.0f,  0.3f, 0.0f,  1.0f, 0.0f, 0.0f,  // 顶点
+            -0.3f, -0.3f, 0.0f,  0.0f, 1.0f, 0.0f,  // 左下
+            0.3f, -0.3f, 0.0f,  0.0f, 0.0f, 1.0f   // 右下
     };
 
     // 创建并配置VAO和VBO
@@ -63,8 +63,9 @@ const char *MovingTriangle::getFragmentShaderSource() const {
 precision mediump float;
 in vec3 vColor;
 out vec4 FragColor;
+uniform vec3 rgbOffset;
 void main() {
-    FragColor = vec4(vColor, 1.0);
+    FragColor = vec4(vColor.x + rgbOffset.r, vColor.y + rgbOffset.g, vColor.z + rgbOffset.b, 1.0);
 }
 )";
 }
@@ -74,19 +75,48 @@ void MovingTriangle::setUniform(GLuint program) {
     float deltaTime = std::chrono::duration<float>(currentTime - mLastTime).count();
     mLastTime = currentTime;
 
-    mTotalTime += deltaTime;
-
     mTranslationX += mSpeedX * sin(deltaTime);
     mTranslationY += mSpeedY * cos(deltaTime);
 
     if (mTranslationX > 0.85f || mTranslationX < -0.85f) {
-        mTranslationX = 0.85f;
+        if (mTranslationX > 0.85f) mTranslationX = 0.85f;
+        else mTranslationX = -0.85;
+
         mSpeedX = -mSpeedX;
     }
+
     if (mTranslationY > 0.85f || mTranslationY < -0.85f) {
-        mTranslationY = 0.85f;
+        if (mTranslationY > 0.85f) mTranslationY = 0.85f;
+        else mTranslationY = -0.85f;
+
         mSpeedY = -mSpeedY;
     }
 
+    rOffset += mColorR * sin(deltaTime);
+    gOffset += mColorG * sin(deltaTime);
+    bOffset += mColorB * sin(deltaTime);
+
+    if (rOffset > 1 || rOffset < 0) {
+        if (rOffset > 1) rOffset = 1;
+        else rOffset = 0;
+
+        mColorR = -mColorR;
+    }
+
+    if (gOffset > 1 || gOffset < 0) {
+        if (gOffset > 1) gOffset = 1;
+        else gOffset = 0;
+
+        mColorG = -mColorG;
+    }
+
+    if (bOffset > 1 || bOffset < 0) {
+        if (bOffset > 1) bOffset = 1;
+        else bOffset = 0;
+
+        mColorB = -mColorB;
+    }
+
     glUniform2f(glGetUniformLocation(program, "uTranslation"), mTranslationX, mTranslationY);
+    glUniform3f(glGetUniformLocation(program, "rgbOffset"), rOffset, gOffset, bOffset);
 }
