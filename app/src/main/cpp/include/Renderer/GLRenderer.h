@@ -14,6 +14,7 @@
 #include "ShaderManager.h"
 #include "IRenderer.h"
 #include "Geometry/Triangle.h"
+#include "Geometry/Square.h"
 
 #define LOG_TAG "GLRenderer"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -23,11 +24,9 @@ class GLRenderer: public IRenderer{
 public:
 
     GLRenderer();
-    ~GLRenderer() = default;
+    ~GLRenderer() override = default;
 
     bool init() override;
-
-    bool init(std::shared_ptr<Geometry> geometry_);
 
     void onSurfaceChanged(int width, int height) override;
 

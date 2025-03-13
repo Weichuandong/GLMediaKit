@@ -13,7 +13,7 @@ GLRenderer::GLRenderer() :
 
 bool GLRenderer::init() {
     geometry = std::make_shared<Triangle>();
-
+//    geometry = std::make_shared<Square>();
     geometry->init();
 
     program = shaderManager->createProgram(
@@ -26,30 +26,7 @@ bool GLRenderer::init() {
         return false;
     }
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    return true;
-}
-
-bool GLRenderer::init(std::shared_ptr<Geometry> geometry_) {
-    if (!geometry) {
-        LOGE("Null geometry");
-        return false;
-    }
-
-    geometry = std::move(geometry_);
-
-    geometry->init();
-
-    program = shaderManager->createProgram(
-            geometry->getVertexShaderSource(),
-            geometry->getFragmentShaderSource());
-
-    if (program == 0) {
-        LOGE("Failed to create shader program");
-        return false;
-    }
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     return true;
 }
 
