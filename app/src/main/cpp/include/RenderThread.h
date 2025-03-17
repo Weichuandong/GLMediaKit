@@ -5,14 +5,14 @@
 #ifndef GLMEDIAKIT_RENDERTHREAD_H
 #define GLMEDIAKIT_RENDERTHREAD_H
 // 添加前向声明
-class EGLManager;
+class MediaManager;
 
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include "Renderer/IRenderer.h"
 #include "EGL/EGLCore.h"
-#include "EGL/EGLManager.h"
+#include "MediaManager.h"
 
 #define LOG_TAG "RenderThread"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -22,7 +22,7 @@ public:
     RenderThread();
     ~RenderThread();
 
-    void start(IRenderer* renderer, EGLSurface surface, EGLCore* eglCore, EGLManager* manager);
+    void start(IRenderer* renderer, EGLSurface surface, EGLCore* eglCore, MediaManager* manager);
     void stop();
     bool isRunning() const;
 
@@ -36,7 +36,7 @@ private:
     EGLCore* eglCore;
 
     // 添加对EGLManager的引用
-    EGLManager* eglManager;
+    MediaManager* eglManager;
     bool rendererInitialized;
 
     void renderLoop();

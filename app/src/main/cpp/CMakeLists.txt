@@ -33,7 +33,7 @@ find_library(log-lib log)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
-        EGLJNIBridge.cpp
+        MediaJNIBridge.cpp
         src/Renderer/GLRenderer.cpp
         src/Renderer/ShaderManager.cpp
         src/Renderer/ImageRenderer.cpp
@@ -45,7 +45,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/Geometry/MovingTriangle.cpp
         src/Renderer/Geometry/RotatingTriangle.cpp
         src/EGL/EGLCore.cpp
-        src/EGL/EGLManager.cpp)
+        src/MediaManager.cpp)
 
 ## include
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

@@ -1,10 +1,10 @@
 //
 // Created by Weichuandong on 2025/3/10.
 //
-#include "EGL/EGLManager.h"
+#include "MediaManager.h"
 #include "RenderThread.h"
 
-EGLManager::EGLManager()
+MediaManager::MediaManager()
         : eglCore(nullptr),
           eglSurface(EGL_NO_SURFACE),
           renderer(nullptr),
@@ -16,11 +16,11 @@ EGLManager::EGLManager()
           textureManager(new TextureManager()){
 }
 
-EGLManager::~EGLManager() {
+MediaManager::~MediaManager() {
     release();
 }
 
-bool EGLManager::init() {
+bool MediaManager::init() {
     eglCore = new EGLCore();
     if (!eglCore->init()) {
         LOGE("Failed to initialize EGLCore");
@@ -31,7 +31,7 @@ bool EGLManager::init() {
     return true;
 }
 
-void EGLManager::surfaceCreated(ANativeWindow* nativeWindow) {
+void MediaManager::surfaceCreated(ANativeWindow* nativeWindow) {
     LOGI("Surface created");
     window = nativeWindow;
 
@@ -49,7 +49,7 @@ void EGLManager::surfaceCreated(ANativeWindow* nativeWindow) {
     }
 }
 
-void EGLManager::surfaceChanged(int w, int h) {
+void MediaManager::surfaceChanged(int w, int h) {
     LOGI("Surface changed: %d x %d", w, h);
 
     {
@@ -66,7 +66,7 @@ void EGLManager::surfaceChanged(int w, int h) {
     }
 }
 
-void EGLManager::surfaceDestroyed() {
+void MediaManager::surfaceDestroyed() {
     LOGI("Surface destroyed");
 
     // 停止渲染线程
@@ -85,7 +85,7 @@ void EGLManager::surfaceDestroyed() {
     }
 }
 
-void EGLManager::setImage(void* data, int w, int h) {
+void MediaManager::setImage(void* data, int w, int h) {
     if (renderer) {
         auto* imageRenderer = dynamic_cast<ImageRenderer*>(renderer);
         if (imageRenderer) {
@@ -94,7 +94,7 @@ void EGLManager::setImage(void* data, int w, int h) {
     }
 }
 
-void EGLManager::release() {
+void MediaManager::release() {
     // 停止渲染线程
     if (renderThread) {
         renderThread->stop();
@@ -132,7 +132,7 @@ void EGLManager::release() {
     }
 }
 
-bool EGLManager::checkAndResetSurfaceChanged(int& w, int& h) {
+bool MediaManager::checkAndResetSurfaceChanged(int& w, int& h) {
     std::lock_guard<std::mutex> lock(stateMutex);
     if (surfaceSizeChanged) {
         w = width;
@@ -143,7 +143,7 @@ bool EGLManager::checkAndResetSurfaceChanged(int& w, int& h) {
     return false;
 }
 
-int EGLManager::createTextureFromBitmap(JNIEnv *env, jobject bitmap, jstring key) {
+int MediaManager::createTextureFromBitmap(JNIEnv *env, jobject bitmap, jstring key) {
     if (!bitmap) {
         LOGE("Bitmap is null");
     }

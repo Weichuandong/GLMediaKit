@@ -17,7 +17,7 @@ RenderThread::~RenderThread() {
     stop();
 }
 
-void RenderThread::start(IRenderer* r, EGLSurface surface, EGLCore* core, EGLManager* manager) {
+void RenderThread::start(IRenderer* r, EGLSurface surface, EGLCore* core, MediaManager* manager) {
     if (running) {
         return;
     }

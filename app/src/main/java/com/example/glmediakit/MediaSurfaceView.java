@@ -8,9 +8,8 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
-public class EGLSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
+public class MediaSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     private long nativeHandle = 0;
 
     private native long nativeInit();
@@ -21,12 +20,12 @@ public class EGLSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
     private native void nativeSetImage(long handle, ByteBuffer pixels, int width, int height);
     private native int nativeCreateTexture(long handle, Bitmap bitmap, String key);
 
-    public EGLSurfaceView(Context context) {
+    public MediaSurfaceView(Context context) {
         super(context);
         init();
     }
 
-    public EGLSurfaceView(Context context, AttributeSet attrs) {
+    public MediaSurfaceView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }

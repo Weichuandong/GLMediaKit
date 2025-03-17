@@ -2,29 +2,29 @@
 // Created by Weichuandong on 2025/3/10.
 //
 
-#ifndef GLMEDIAKIT_EGLMANAGER_H
-#define GLMEDIAKIT_EGLMANAGER_H
+#ifndef GLMEDIAKIT_MEDIAMANAGER_H
+#define GLMEDIAKIT_MEDIAMANAGER_H
 
 #include <android/native_window.h>
 #include <jni.h>
 
-#include "EGLCore.h"
+#include "EGL/EGLCore.h"
 #include "Renderer/IRenderer.h"
 #include "RenderThread.h"
 #include "Renderer/ImageRenderer.h"
 #include "Renderer/GLRenderer.h"
 #include "TextureManger.h"
 
-#define LOG_TAG "EGLManager"
+#define LOG_TAG "MediaManager"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 class RenderThread;
 
-class EGLManager {
+class MediaManager {
 public:
-    EGLManager();
-    ~EGLManager();
+    MediaManager();
+    ~MediaManager();
 
     // 初始化EGL环境
     bool init();
@@ -63,4 +63,4 @@ private:
     void release();
 };
 
-#endif //GLMEDIAKIT_EGLMANAGER_H
+#endif //GLMEDIAKIT_MEDIAMANAGER_H

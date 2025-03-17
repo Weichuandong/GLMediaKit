@@ -11,7 +11,7 @@ import com.example.glmediakit.R
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var eglSurfaceView: EGLSurfaceView
+    private lateinit var eglSurfaceView: MediaSurfaceView
     private var currentBitmap: Bitmap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         val container = findViewById<FrameLayout>(R.id.surface_container)
 
         // 2. 创建EGLSurfaceView实例
-        eglSurfaceView = EGLSurfaceView(this)
+        eglSurfaceView = MediaSurfaceView(this)
 
         // 3. 添加到布局中
         container.addView(eglSurfaceView)
