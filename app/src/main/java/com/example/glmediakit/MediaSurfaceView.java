@@ -13,7 +13,7 @@ public class MediaSurfaceView extends SurfaceView implements SurfaceHolder.Callb
     private long nativeHandle = 0;
 
     private native long nativeInit();
-    private native void nativeFinalize(long handle);
+    private native void nativeRelease(long handle);
     private native void nativeSurfaceCreated(long handle, Surface surface);
     private native void nativeSurfaceChanged(long handle, int width, int height);
     private native void nativeSurfaceDestroyed(long handle);
@@ -76,12 +76,20 @@ public class MediaSurfaceView extends SurfaceView implements SurfaceHolder.Callb
         }
     }
 
-    @Override
-    protected void finalize() throws Throwable {
+//    @Override
+//    protected void finalize() throws Throwable {
+//        if (nativeHandle != 0) {
+//            nativeFinalize(nativeHandle);
+//            nativeHandle = 0;
+//        }
+//        super.finalize();
+//    }
+
+    // 在 Activity 的 onDestroy 中调用
+    public void release() {
         if (nativeHandle != 0) {
-            nativeFinalize(nativeHandle);
+            nativeRelease(nativeHandle);
             nativeHandle = 0;
         }
-        super.finalize();
     }
 }

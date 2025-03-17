@@ -56,6 +56,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
     }
 
+    override fun onDestroy() {
+        eglSurfaceView.release()
+        super.onDestroy()
+    }
+
     companion object {
         init {
             System.loadLibrary("GLMediaKit")

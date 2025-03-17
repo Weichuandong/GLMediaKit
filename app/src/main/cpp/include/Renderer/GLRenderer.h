@@ -26,7 +26,7 @@ class GLRenderer: public IRenderer{
 public:
 
     GLRenderer();
-    ~GLRenderer() override = default;
+    ~GLRenderer() override;
 
     bool init() override;
 

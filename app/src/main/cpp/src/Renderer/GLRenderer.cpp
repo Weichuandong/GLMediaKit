@@ -78,3 +78,7 @@ bool GLRenderer::setGeometry(const std::shared_ptr<Geometry>& geometry_) {
 void GLRenderer::release() {
 
 }
+
+GLRenderer::~GLRenderer() {
+    release();
+}

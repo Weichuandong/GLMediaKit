@@ -5,9 +5,9 @@
 #include "RenderThread.h"
 
 MediaManager::MediaManager()
-        : eglCore(nullptr),
+        : eglCore(new EGLCore()),
           eglSurface(EGL_NO_SURFACE),
-          renderer(nullptr),
+          renderer(new GLRenderer()),
           window(nullptr),
           width(0),
           height(0),
@@ -21,7 +21,6 @@ MediaManager::~MediaManager() {
 }
 
 bool MediaManager::init() {
-    eglCore = new EGLCore();
     if (!eglCore->init()) {
         LOGE("Failed to initialize EGLCore");
         delete eglCore;
@@ -40,12 +39,6 @@ void MediaManager::surfaceCreated(ANativeWindow* nativeWindow) {
     if (eglSurface == EGL_NO_SURFACE) {
         LOGE("Failed to create EGL surface");
         return;
-    }
-
-    // 创建渲染器
-    if (renderer == nullptr) {
-//        renderer = new ImageRenderer();
-        renderer = new GLRenderer();
     }
 }
 
@@ -95,15 +88,14 @@ void MediaManager::setImage(void* data, int w, int h) {
 }
 
 void MediaManager::release() {
+    LOGI("MediaManager release.");
     // 停止渲染线程
     if (renderThread) {
-        renderThread->stop();
         delete renderThread;
         renderThread = nullptr;
     }
     // 释放渲染器
     if (renderer) {
-        renderer->release();
         delete renderer;
         renderer = nullptr;
     }
@@ -114,7 +106,6 @@ void MediaManager::release() {
             eglCore->destroySurface(eglSurface);
             eglSurface = EGL_NO_SURFACE;
         }
-        eglCore->release();
         delete eglCore;
         eglCore = nullptr;
     }

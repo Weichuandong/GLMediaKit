@@ -19,7 +19,7 @@ Java_com_example_glmediakit_MediaSurfaceView_nativeInit(JNIEnv *env, jobject thi
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_glmediakit_MediaSurfaceView_nativeFinalize(JNIEnv *env, jobject thiz,
+Java_com_example_glmediakit_MediaSurfaceView_nativeRelease(JNIEnv *env, jobject thiz,
                                                              jlong handle) {
     if (handle != 0) {
         auto *manager = reinterpret_cast<MediaManager*>(handle);
