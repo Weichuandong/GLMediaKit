@@ -17,6 +17,7 @@
 #include "Geometry/Square.h"
 #include "Geometry/MovingTriangle.h"
 #include "Geometry/RotatingTriangle.h"
+#include "Renderer/OffscreenRenderer.h"
 
 #define LOG_TAG "GLRenderer"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -47,6 +48,9 @@ private:
 
     uint16_t mWidth;
     uint16_t mHeight;
+
+    OffscreenRenderer offscreenRenderer;
+
 };
 
 #endif //GLMEDIAKIT_GLRENDERER_H

@@ -42,8 +42,12 @@ GLuint ShaderManager::createProgram(const char* vsSource, const char* fgSource) 
     GLuint vsShader = createShader(GL_VERTEX_SHADER, vsSource);
     GLuint fgShader = createShader(GL_FRAGMENT_SHADER, fgSource);
 
-    if (vsShader == 0 || fgShader == 0) {
-        LOGE("Failed to create shaders");
+    if (vsShader == 0) {
+        LOGE("Failed to create vsShader");
+        return -1;
+    }
+    if (fgShader == 0) {
+        LOGE("Failed to create fgShader");
         return -1;
     }
 

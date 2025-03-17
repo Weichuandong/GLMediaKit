@@ -38,6 +38,8 @@ void  GLRenderer::onSurfaceChanged(int width, int height) {
     mHeight = height;
 
     glViewport(0.0f, 0.0f, mWidth, mHeight);
+
+    offscreenRenderer.initialize(mWidth, mHeight);
 }
 
 void GLRenderer::onDrawFrame() {
@@ -45,11 +47,14 @@ void GLRenderer::onDrawFrame() {
         LOGE("Cannot render: geometry or program not initialized");
         return;
     }
+    offscreenRenderer.beginRender();
 
     geometry->use(program);
     geometry->setUniform(program);
     geometry->bind();
     geometry->draw();
+
+    offscreenRenderer.endRenderAndDraw(mWidth, mHeight);
 }
 
 bool GLRenderer::setGeometry(const std::shared_ptr<Geometry>& geometry_) {

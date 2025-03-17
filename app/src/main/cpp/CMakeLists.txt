@@ -37,6 +37,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/GLRenderer.cpp
         src/Renderer/ShaderManager.cpp
         src/Renderer/ImageRenderer.cpp
+        src/Renderer/OffscreenRenderer.cpp
         src/RenderThread.cpp
         src/TextureManger.cpp
         src/Renderer/Geometry/Geometry.cpp
