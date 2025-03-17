@@ -6,11 +6,14 @@
 #define GLMEDIAKIT_EGLMANAGER_H
 
 #include <android/native_window.h>
+#include <jni.h>
+
 #include "EGLCore.h"
 #include "Renderer/IRenderer.h"
 #include "RenderThread.h"
 #include "Renderer/ImageRenderer.h"
 #include "Renderer/GLRenderer.h"
+#include "TextureManger.h"
 
 #define LOG_TAG "EGLManager"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -39,12 +42,17 @@ public:
 
     bool checkAndResetSurfaceChanged(int& w, int& h);
 
+    // 添加纹理
+    int createTextureFromBitmap(JNIEnv* env, jobject bitmap, jstring key);
+
 private:
     EGLCore* eglCore;
     EGLSurface eglSurface;
     IRenderer* renderer;
     RenderThread* renderThread;
     ANativeWindow* window;
+    TextureManager* textureManager;
+
     int width;
     int height;
 

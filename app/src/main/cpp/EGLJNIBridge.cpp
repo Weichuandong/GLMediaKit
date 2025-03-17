@@ -70,3 +70,16 @@ Java_com_example_glmediakit_EGLSurfaceView_nativeSetImage(JNIEnv *env, jobject t
         manager->setImage(data, width, height);
     }
 }
+extern "C"
+JNIEXPORT int JNICALL
+Java_com_example_glmediakit_EGLSurfaceView_nativeCreateTexture(JNIEnv *env, jobject thiz,
+                                                               jlong handle, jobject bitmap, jstring key) {
+    if (handle == 0 || bitmap == NULL) {
+        LOGE("Invalid handle or bitmap");
+        return 0;
+    }
+
+    auto* manager = reinterpret_cast<EGLManager*>(handle);
+
+    return manager->createTextureFromBitmap(env, bitmap, key);
+}

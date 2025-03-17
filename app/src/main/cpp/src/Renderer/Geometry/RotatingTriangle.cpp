@@ -71,7 +71,7 @@ void main() {
 }
 
 void RotatingTriangle::setUniform(GLuint program) {
-    // 设置视图和投影矩阵（通常只需设置一次）
+    // 设置视图和投影矩阵
     glm::mat4 viewMatrix = glm::lookAt(
             glm::vec3(0.0f, 0.0f, 3.0f),    // 摄像机位置
             glm::vec3(0.0f, 0.0f, 0.0f),  // 目标位置
@@ -80,7 +80,7 @@ void RotatingTriangle::setUniform(GLuint program) {
 
     glm::mat4 projectionMatrix = glm::perspective(
             glm::radians(45.0f),          // 视野角度
-            (float)972 / (float)1670, // 宽高比
+            (float)972 / (float)1670,           // 宽高比
             0.1f, 100.0f                   // 近平面和远平面
     );
 
@@ -89,9 +89,11 @@ void RotatingTriangle::setUniform(GLuint program) {
 
     // 更新模型矩阵以实现旋转
     auto modelMatrix = glm::mat4(1.0f);
-//    modelMatrix = glm::rotate(modelMatrix, deltaTime, glm::vec3(1.0f, 0.0f, 0.0f)); // 绕X轴旋转
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 0.5f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.5f, 0.5f, 0.0f));
+    modelMatrix = glm::rotate(modelMatrix, deltaTime, glm::vec3(1.0f, 0.0f, 0.0f)); // 绕X轴旋转
 //    modelMatrix = glm::rotate(modelMatrix, deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)); // 绕Y轴旋转
-    modelMatrix = glm::rotate(modelMatrix, deltaTime, glm::vec3(0.0f, 0.0f, 1.0f)); // 绕Z轴旋转
+//    modelMatrix = glm::rotate(modelMatrix, deltaTime, glm::vec3(0.0f, 0.0f, 1.0f)); // 绕Z轴旋转
 
     // 设置MVP矩阵
     glUniformMatrix4fv(glGetUniformLocation(program, "uModelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));

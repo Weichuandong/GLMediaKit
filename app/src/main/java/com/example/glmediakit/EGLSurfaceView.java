@@ -19,7 +19,7 @@ public class EGLSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
     private native void nativeSurfaceChanged(long handle, int width, int height);
     private native void nativeSurfaceDestroyed(long handle);
     private native void nativeSetImage(long handle, ByteBuffer pixels, int width, int height);
-
+    private native int nativeCreateTexture(long handle, Bitmap bitmap, String key);
 
     public EGLSurfaceView(Context context) {
         super(context);
@@ -63,12 +63,17 @@ public class EGLSurfaceView extends SurfaceView implements SurfaceHolder.Callbac
 
     public void setImage(Bitmap bitmap) {
         if (nativeHandle != 0 && bitmap != null && !bitmap.isRecycled()) {
-            ByteBuffer buffer = ByteBuffer.allocateDirect(bitmap.getWidth() * bitmap.getHeight() * 4);
-            buffer.order(ByteOrder.nativeOrder());
-            bitmap.copyPixelsToBuffer(buffer);
-            buffer.position(0);
+            // bitmap 如果不是 RGBA8的格式，需要转换
+            if (bitmap.getConfig() != Bitmap.Config.ARGB_8888) {
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+            }
+//            ByteBuffer buffer = ByteBuffer.allocateDirect(bitmap.getWidth() * bitmap.getHeight() * 4);
+//            buffer.order(ByteOrder.nativeOrder());
+//            bitmap.copyPixelsToBuffer(buffer);
+//            buffer.position(0);
 
-            nativeSetImage(nativeHandle, buffer, bitmap.getWidth(), bitmap.getHeight());
+            nativeCreateTexture(nativeHandle, bitmap, "Dog");
+//            nativeSetImage(nativeHandle, buffer, bitmap.getWidth(), bitmap.getHeight());
         }
     }
 

@@ -38,6 +38,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/ShaderManager.cpp
         src/Renderer/ImageRenderer.cpp
         src/RenderThread.cpp
+        src/TextureManger.cpp
         src/Renderer/Geometry/Geometry.cpp
         src/Renderer/Geometry/Triangle.cpp
         src/Renderer/Geometry/Square.cpp
@@ -57,6 +58,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # build script, prebuilt third-party libraries, or Android system libraries.
 target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
+        jnigraphics
         ${GLESV3-lib}
         ${EGL-lib}
         ${android-lib}

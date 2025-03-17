@@ -27,14 +27,14 @@ class MainActivity : AppCompatActivity() {
         // 3. 添加到布局中
         container.addView(eglSurfaceView)
 
-        // 4. 设置加载图片的按钮点击事件
+        // 4. 设置加载图片纹理的按钮点击事件
         findViewById<Button>(R.id.btn_load_image).setOnClickListener {
-            loadAndShowImage()
+            loadImage()
         }
     }
 
-    // 加载示例图片并显示
-    private fun loadAndShowImage() {
+    // 加载示例图片作为纹理
+    private fun loadImage() {
         try {
             // 从资源文件加载图片
             currentBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_image)

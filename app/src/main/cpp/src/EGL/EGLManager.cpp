@@ -12,7 +12,8 @@ EGLManager::EGLManager()
           width(0),
           height(0),
           renderThread(new RenderThread()),
-          surfaceSizeChanged(false){
+          surfaceSizeChanged(false),
+          textureManager(new TextureManager()){
 }
 
 EGLManager::~EGLManager() {
@@ -123,6 +124,12 @@ void EGLManager::release() {
         ANativeWindow_release(window);
         window = nullptr;
     }
+
+    // 释放TextureManager
+    if (textureManager){
+        textureManager->deleteAllTextures();
+        delete textureManager;
+    }
 }
 
 bool EGLManager::checkAndResetSurfaceChanged(int& w, int& h) {
@@ -134,4 +141,13 @@ bool EGLManager::checkAndResetSurfaceChanged(int& w, int& h) {
         return true;
     }
     return false;
+}
+
+int EGLManager::createTextureFromBitmap(JNIEnv *env, jobject bitmap, jstring key) {
+    if (!bitmap) {
+        LOGE("Bitmap is null");
+    }
+
+    textureManager->createTextureFromBitmap(env, bitmap, reinterpret_cast<const char *>(key));
+    return 0;
 }
