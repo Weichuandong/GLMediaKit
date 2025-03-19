@@ -7,7 +7,6 @@
 OffscreenRenderer::OffscreenRenderer() :
     fbo(0),
     textureColor(0),
-    rbo(0),
     screenVAO(0),
     screenVBO(0),
     screenShader(0),
@@ -16,6 +15,8 @@ OffscreenRenderer::OffscreenRenderer() :
     height(0) {}
 
 bool OffscreenRenderer::initialize(int w, int h) {
+    cleanup();
+
     // 保存尺寸
     width = w;
     height = h;
@@ -32,16 +33,9 @@ bool OffscreenRenderer::initialize(int w, int h) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColor, 0);
 
-    // 创建渲染缓冲对象(可选，用于深度和模板缓冲)
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
     // 检查帧缓冲是否完整
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        // 处理错误
         return false;
     }
 
@@ -62,6 +56,7 @@ bool OffscreenRenderer::initialize(int w, int h) {
     glGenVertexArrays(1, &screenVAO);
     glGenBuffers(1, &screenVBO);
     glBindVertexArray(screenVAO);
+
     glBindBuffer(GL_ARRAY_BUFFER, screenVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
@@ -74,7 +69,7 @@ bool OffscreenRenderer::initialize(int w, int h) {
     screenShader = shaderManager.createProgram(
             getVertexShaderSource(),
             getFragmentShaderSource()
-    );  // 这个函数需要单独实现
+    );
 
     initialized = true;
     return true;
@@ -135,7 +130,6 @@ void OffscreenRenderer::cleanup() {
 
     glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &textureColor);
-    glDeleteRenderbuffers(1, &rbo);
     glDeleteVertexArrays(1, &screenVAO);
     glDeleteBuffers(1, &screenVBO);
     glDeleteProgram(screenShader);

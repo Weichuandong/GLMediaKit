@@ -12,17 +12,16 @@ class MediaManager;
 #include <mutex>
 #include "Renderer/IRenderer.h"
 #include "EGL/EGLCore.h"
-#include "MediaManager.h"
+//#include "MediaManager.h"
 
-#define LOG_TAG "RenderThread"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "RenderThread", __VA_ARGS__)
 
 class RenderThread {
 public:
     RenderThread();
     ~RenderThread();
 
-    void start(IRenderer* renderer, EGLSurface surface, EGLCore* eglCore, MediaManager* manager);
+    void start(IRenderer* renderer, EGLCore* eglCore);
     void stop();
     bool isRunning() const;
 
@@ -32,11 +31,11 @@ private:
     std::mutex mutex;
 
     IRenderer* renderer;
-    EGLSurface eglSurface;
+//    EGLSurface eglSurface;
     EGLCore* eglCore;
 
     // 添加对EGLManager的引用
-    MediaManager* eglManager;
+//    MediaManager* eglManager;
     bool rendererInitialized;
 
     void renderLoop();

@@ -54,6 +54,7 @@ void Triangle::init() {
 
 void Triangle::draw() {
 //    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0 ,3);
 
     // 解绑

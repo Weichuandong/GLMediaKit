@@ -65,12 +65,12 @@ EGLSurface EGLCore::createWindowSurface(ANativeWindow *window) {
         LOGE("window is null");
         return EGL_NO_SURFACE;
     }
-
-    EGLSurface surface = eglCreateWindowSurface(eglDisplay, eglConfig, window, NULL);
-    if (surface == EGL_NO_SURFACE) {
+    mWindow = window;
+    eglSurface = eglCreateWindowSurface(eglDisplay, eglConfig, window, NULL);
+    if (eglSurface == EGL_NO_SURFACE) {
         LOGE("Unable to create EGL surface");
     }
-    return surface;
+    return eglSurface;
 }
 
 EGLSurface EGLCore::createOffscreenSurface(int width, int height) {
@@ -87,17 +87,23 @@ EGLSurface EGLCore::createOffscreenSurface(int width, int height) {
     return surface;
 }
 
-bool EGLCore::makeCurrent(EGLSurface surface) {
-    return eglMakeCurrent(eglDisplay, surface, surface, eglContext);
+bool EGLCore::makeCurrent() {
+    return eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
 }
 
-bool EGLCore::swapBuffers(EGLSurface surface) {
-    return eglSwapBuffers(eglDisplay, surface);
+bool EGLCore::swapBuffers() {
+    return eglSwapBuffers(eglDisplay, eglSurface);
 }
 
-void EGLCore::destroySurface(EGLSurface surface) {
-    if (surface != EGL_NO_SURFACE) {
-        eglDestroySurface(eglDisplay, surface);
+void EGLCore::destroySurface() {
+    if (eglSurface != EGL_NO_SURFACE) {
+        eglDestroySurface(eglDisplay, eglSurface);
+    }
+
+    // 释放窗口
+    if (mWindow) {
+        ANativeWindow_release(mWindow);
+        mWindow = nullptr;
     }
 }
 

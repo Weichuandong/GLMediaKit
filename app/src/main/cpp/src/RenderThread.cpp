@@ -7,9 +7,9 @@
 RenderThread::RenderThread()
         : running(false),
           renderer(nullptr),
-          eglSurface(EGL_NO_SURFACE),
+//          eglSurface(EGL_NO_SURFACE),
           eglCore(nullptr),
-          eglManager(nullptr),
+//          eglManager(nullptr),
           rendererInitialized(false){
 }
 
@@ -17,17 +17,17 @@ RenderThread::~RenderThread() {
     stop();
 }
 
-void RenderThread::start(IRenderer* r, EGLSurface surface, EGLCore* core, MediaManager* manager) {
+void RenderThread::start(IRenderer* r, EGLCore* core) {
     if (running) {
         return;
     }
 
     std::lock_guard<std::mutex> lock(mutex);
     renderer = r;
-    eglSurface = surface;
+//    eglSurface = surface;
     eglCore = core;
     running = true;
-    eglManager = manager;
+//    eglManager = manager;
 
     thread = std::thread(&RenderThread::renderLoop, this);
 }
@@ -51,7 +51,7 @@ void RenderThread::renderLoop() {
     LOGI("Render loop started");
 
     // 确保在渲染线程中使用EGL上下文
-    if(!eglCore->makeCurrent(eglSurface)) {
+    if(!eglCore->makeCurrent()) {
         LOGE("Can not makeCurrent");
         return;
     }
@@ -67,20 +67,20 @@ void RenderThread::renderLoop() {
     while (running) {
         std::lock_guard<std::mutex> lock(mutex);
 
-        // 检查是否处理尺寸变化
-        int width, height;
-        if (eglManager->checkAndResetSurfaceChanged(width, height)) {
-            if (renderer) {
-                renderer->onSurfaceChanged(width, height);
-            }
-        }
+//        // 检查是否处理尺寸变化
+//        int width, height;
+//        if (eglManager->checkAndResetSurfaceChanged(width, height)) {
+//            if (renderer) {
+//                renderer->onSurfaceChanged(width, height);
+//            }
+//        }
 
         if (renderer) {
             renderer->onDrawFrame();
         }
 
         // 交换缓冲区
-        eglCore->swapBuffers(eglSurface);
+        eglCore->swapBuffers();
 
         // 控制帧率
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // ~60fps

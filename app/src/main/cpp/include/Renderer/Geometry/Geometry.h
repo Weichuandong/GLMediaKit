@@ -8,9 +8,8 @@
 #include <GLES3/gl3.h>
 #include <android/log.h>
 
-#define LOG_TAG "Geometry"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "Geometry", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Geometry", __VA_ARGS__)
 
 
 class Geometry {

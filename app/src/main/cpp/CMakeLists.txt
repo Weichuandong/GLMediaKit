@@ -20,6 +20,14 @@ project("GLMediaKit")
 # the target library name; in the sub-module's CMakeLists.txt, ${PROJECT_NAME}
 # is preferred for the same purpose.
 #
+# 导入FFmpeg库
+set(FFMPEG_LIBS avcodec avfilter avformat avutil swscale swresample)
+
+foreach(LIB ${FFMPEG_LIBS})
+    add_library(${LIB} SHARED IMPORTED)
+    set_target_properties(${LIB} PROPERTIES
+            IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ffmpeg/lib/${ANDROID_ABI}/lib${LIB}.so)
+endforeach()
 
 find_library(GLESV3-lib GLESv3)
 find_library(EGL-lib EGL)
@@ -33,25 +41,32 @@ find_library(log-lib log)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
-        MediaJNIBridge.cpp
+        JNIPlayer.cpp
+
+        src/RenderThread.cpp
+        src/TextureManger.cpp
+        src/Player.cpp
+
         src/Renderer/GLRenderer.cpp
         src/Renderer/ShaderManager.cpp
         src/Renderer/ImageRenderer.cpp
         src/Renderer/OffscreenRenderer.cpp
-        src/RenderThread.cpp
-        src/TextureManger.cpp
         src/Renderer/Geometry/Geometry.cpp
         src/Renderer/Geometry/Triangle.cpp
         src/Renderer/Geometry/Square.cpp
         src/Renderer/Geometry/MovingTriangle.cpp
         src/Renderer/Geometry/RotatingTriangle.cpp
+
         src/EGL/EGLCore.cpp
-        src/MediaManager.cpp)
+
+        src/Decoder/FFmpegVideoDecoder.cpp
+        )
 
 ## include
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
         ${CMAKE_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/3rdparty/src
+        ${CMAKE_SOURCE_DIR}/3rdparty
+        ${CMAKE_SOURCE_DIR}/3rdparty/ffmpeg/include
 )
 
 # Specifies libraries CMake should link to your target library. You

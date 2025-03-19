@@ -13,9 +13,8 @@
 #include <android/bitmap.h>
 #include <vector>
 
-#define LOG_TAG "TextureManager"
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "TextureManager", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "TextureManager", __VA_ARGS__)
 
 class TextureManager {
 public:

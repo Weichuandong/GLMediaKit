@@ -28,13 +28,13 @@ public:
     EGLSurface createOffscreenSurface(int width, int height);
 
     // 使表面成为当前绘制目标
-    bool makeCurrent(EGLSurface surface);
+    bool makeCurrent();
 
     // 交换缓冲区
-    bool swapBuffers(EGLSurface surface);
+    bool swapBuffers();
 
     // 销毁表面
-    void destroySurface(EGLSurface surface);
+    void destroySurface();
 
     // 释放EGL上下文
     void release();
@@ -46,5 +46,8 @@ private:
     EGLDisplay eglDisplay;
     EGLContext eglContext;
     EGLConfig eglConfig;
+    EGLSurface eglSurface;
+
+    ANativeWindow* mWindow;
 };
 #endif //GLMEDIAKIT_EGLCORE_H

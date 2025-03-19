@@ -39,7 +39,6 @@ public:
 private:
     GLuint fbo;
     GLuint textureColor;
-    GLuint rbo;
     GLuint screenVAO, screenVBO;
     GLuint screenShader;
 
