@@ -18,6 +18,7 @@ extern "C" {
 #include <condition_variable>
 
 #include "core/SafeQueue.hpp"
+#include "core/PerformceTimer.hpp"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegDemuxer", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegDemuxer", __VA_ARGS__)
@@ -73,8 +74,5 @@ private:
     double duration;
 
     void demuxingThreadFunc();
-
-//    int readPacket(void* opaque, uint8_t* buf, int buf_size);
-//    int64_t seekPacket(void* opaque, int64_t offset, int whence);
 };
 #endif //GLMEDIAKIT_FFMPEGDEMUXER_H

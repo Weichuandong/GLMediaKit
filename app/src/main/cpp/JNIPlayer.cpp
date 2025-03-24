@@ -49,15 +49,6 @@ Java_com_example_glmediakit_Player_nativePause(JNIEnv *env, jobject thiz, jlong 
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_example_glmediakit_Player_nativeResume(JNIEnv *env, jobject thiz, jlong handle) {
-    if (handle != 0) {
-        auto* player = reinterpret_cast<Player*>(handle);
-
-    }
-}
-
-extern "C"
-JNIEXPORT void JNICALL
 Java_com_example_glmediakit_Player_nativeStop(JNIEnv *env, jobject thiz, jlong handle) {
     if (handle != 0) {
         auto* player = reinterpret_cast<Player*>(handle);

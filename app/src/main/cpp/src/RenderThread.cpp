@@ -5,10 +5,8 @@
 #include "RenderThread.h"
 
 RenderThread::RenderThread()
-        : running(false),
-          renderer(nullptr),
-          eglCore(nullptr),
-          rendererInitialized(false){
+        : renderer(nullptr),
+          eglCore(nullptr) {
 }
 
 RenderThread::~RenderThread() {
@@ -16,32 +14,37 @@ RenderThread::~RenderThread() {
 }
 
 void RenderThread::start(IRenderer* r, EGLCore* core) {
-    if (running) {
+    if (exitRequest) {
         return;
     }
     LOGI("RenderThread : start render thread");
 
-    std::lock_guard<std::mutex> lock(mutex);
+    if (!r || !core) {
+        LOGE("eglcore or renderer is null");
+        return;
+    }
+
+    isPaused = false;
     renderer = r;
     eglCore = core;
-    running = true;
+    exitRequest = false;
 
     thread = std::thread(&RenderThread::renderLoop, this);
 }
 
 void RenderThread::stop() {
-    if (!running) {
+    if (exitRequest) {
         return;
     }
 
-    running = false;
+    exitRequest = true;
     if (thread.joinable()) {
         thread.join();
     }
 }
 
 bool RenderThread::isRunning() const {
-    return running;
+    return !isPaused && thread.joinable();
 }
 
 void RenderThread::renderLoop() {
@@ -53,32 +56,79 @@ void RenderThread::renderLoop() {
         return;
     }
 
-    if (renderer && !rendererInitialized) {
+    if (renderer) {
         if (!renderer->init()) {
             LOGE("Failed to init renderer");
             return;
         }
-        rendererInitialized = true;
     }
 
-    while (running) {
+    auto lastLogTime = std::chrono::steady_clock::now();
+    uint16_t renderFrameCount = 0;
+
+    while (!exitRequest) {
         //判断是否暂停
         {
-
+            std::unique_lock<std::mutex> lock(mtx);
+            while (isPaused && !exitRequest) {
+                pauseCond.wait(lock);
+            }
         }
 
-        std::lock_guard<std::mutex> lock(mutex);
+        executeGLTasks();
+
         if (renderer) {
             renderer->onDrawFrame();
         }
+
+        // 判断egl是否有效
+        if (eglCore == nullptr || eglCore->getSurface() == EGL_NO_SURFACE) {
+            LOGE("当前eglCore无效或未绑定Surface");
+            continue;
+        }
         // 交换缓冲区
         eglCore->swapBuffers();
+
+        renderFrameCount++;
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
+        if (elapsed.count() >= 3) {
+            LOGI("渲染统计: %d帧/%ds (%.2f帧/秒)",
+                 renderFrameCount, (int)elapsed.count(),
+                 renderFrameCount/(float)elapsed.count());
+            renderFrameCount = 0;
+            lastLogTime = now;
+        }
+
         // 控制帧率
-//        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
+        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
     }
     LOGI("Render loop stopped");
 }
 
-void RenderThread::pause() const {
+void RenderThread::pause() {
+    isPaused = true;
+}
 
+void RenderThread::resume() {
+    isPaused = false;
+    pauseCond.notify_one();
+}
+
+void RenderThread::executeGLTasks() {
+    std::unique_lock<std::mutex> lk(taskMtx);
+    while (!glTasks.empty()) {
+        auto task = glTasks.front();
+        glTasks.pop();
+
+        lk.unlock();
+        task();
+        lk.lock();
+    }
+}
+
+// 提交需要在GL线程上执行的任务
+void RenderThread::postTask(const std::function<void()>& task) {
+    std::lock_guard<std::mutex> lock(taskMtx);
+    glTasks.emplace(task);
 }

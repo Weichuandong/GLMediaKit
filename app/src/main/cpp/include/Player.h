@@ -48,6 +48,7 @@ public:
     bool stop();
     bool release();
     bool seekTo(double position);
+    bool resume();
 //
     // 状态查询
     Player::PlayerState getPlayerState();
@@ -85,7 +86,7 @@ private:
 
 
     std::string mediaPath;
-    double seekPosition;
+    double seekPosition{};
 //    double currentPosition;
     // 相关队列
     std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
@@ -111,8 +112,5 @@ private:
     // 禁止拷贝构造和赋值
     Player(const Player&) = delete;
     Player& operator=(const Player&) = delete;
-
-//    void setFilePath(const std::string& file_path);
-
 };
 #endif //GLMEDIAKIT_PLAYER_H

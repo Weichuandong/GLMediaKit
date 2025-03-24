@@ -16,7 +16,7 @@ extern "C" {
 template<typename T>
 class SafeQueue {
 public:
-    explicit SafeQueue(size_t maxSize = 3) :
+    explicit SafeQueue(size_t maxSize = 100) :
         maxSize(maxSize),
         flushing(false){}
 

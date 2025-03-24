@@ -52,6 +52,11 @@ bool VideoRenderer::init() {
 }
 
 void VideoRenderer::onSurfaceChanged(int width, int height) {
+    if (width == surfaceWidth && height == surfaceHeight) {
+        return;
+    }
+    LOGI("VideoRender: surface changed from %d*%d to %d*%d",
+         surfaceWidth, surfaceHeight, width, height);
     surfaceWidth = width;
     surfaceHeight = height;
 
@@ -160,9 +165,9 @@ void VideoRenderer::create_textures() {
 void VideoRenderer::update_textures() {
     // 从队列中取出一帧frame
     AVFrame* frame;
-    videoFrameQueue->pop(frame);
+    videoFrameQueue->pop(frame, 10);
 
-    if (frame) {
+    if (frame && frame->width > 0 && frame->height > 0) {
         // 视频尺寸变化
         if (frame->width != videoWidth || frame->height != videoHeight) {
             videoWidth = frame->width;

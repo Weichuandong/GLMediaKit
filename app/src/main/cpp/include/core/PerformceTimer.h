@@ -1,9 +1,0 @@
-//
-// Created by Weichuandong on 2025/3/24.
-//
-
-#ifndef GLMEDIAKIT_PERFORMCETIMER_H
-#define GLMEDIAKIT_PERFORMCETIMER_H
-
-
-#endif //GLMEDIAKIT_PERFORMCETIMER_H

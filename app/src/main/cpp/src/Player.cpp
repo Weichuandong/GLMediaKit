@@ -16,6 +16,7 @@ Player::Player():
     isAttachSurface(false)
 {
     renderer = std::make_shared<VideoRenderer>(videoFrameQueue);
+    demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
 
     init();
 }
@@ -73,6 +74,16 @@ bool Player::pause() {
     return true;
 }
 
+bool Player::resume() {
+    LOGI("Player resume");
+
+    if (!canTransitionTo(PlayerState::PLAYING)) {
+        return false;
+    }
+    changeState(PlayerState::PLAYING);
+    return true;
+}
+
 bool Player::stop() {
     LOGI("Player stopped");
 
@@ -121,15 +132,17 @@ void Player::detachSurface() {
     }
 
     // 停止处理
-    if (!canTransitionTo(PlayerState::INIT)) {
+    if (!canTransitionTo(PlayerState::PAUSED)) {
         return;
     }
-    changeState(PlayerState::INIT);
+    changeState(PlayerState::PAUSED);
 }
 
 void Player::surfaceSizeChanged(int width, int height) {
     LOGI("SurfaceSize Changed");
-    renderer->onSurfaceChanged(width, height);
+    renderThread->postTask([width, height, this]() {
+        renderer->onSurfaceChanged(width, height);
+    });
 }
 
 bool Player::release() {
@@ -153,11 +166,8 @@ void Player::changeState(Player::PlayerState newState) {
 
         if (oldState == newState) return;
 
-        // 记录前一个状态（用于SEEKING后恢复）
-        if (newState == PlayerState::SEEKING) {
-            previousState = oldState;
-        }
-
+        // 记录前一个状态
+        previousState = oldState;
         currentState = newState;
     }
 
@@ -216,24 +226,28 @@ bool Player::canTransitionTo(Player::PlayerState targetState) {
                    targetState == PlayerState::SEEKING ||
                    targetState == PlayerState::COMPLETED ||
                    targetState == PlayerState::ERROR ||
-                   targetState == PlayerState::STOPPED;
+                   targetState == PlayerState::STOPPED ||
+                   targetState == PlayerState::INIT;
 
         case PlayerState::PAUSED:
             return targetState == PlayerState::PLAYING ||
                    targetState == PlayerState::SEEKING ||
                    targetState == PlayerState::ERROR ||
-                   targetState == PlayerState::STOPPED;
+                   targetState == PlayerState::STOPPED ||
+                   targetState == PlayerState::INIT;
 
         case PlayerState::SEEKING:
             return targetState == PlayerState::PLAYING ||
                    targetState == PlayerState::PAUSED ||
                    targetState == PlayerState::ERROR ||
-                   targetState == PlayerState::STOPPED;
+                   targetState == PlayerState::STOPPED ||
+                   targetState == PlayerState::INIT;
 
         case PlayerState::COMPLETED:
             return targetState == PlayerState::PLAYING ||
                    targetState == PlayerState::PREPARED ||
-                   targetState == PlayerState::STOPPED;
+                   targetState == PlayerState::STOPPED ||
+                   targetState == PlayerState::INIT;
 
         case PlayerState::ERROR:
             return targetState == PlayerState::INIT ||
@@ -247,24 +261,26 @@ bool Player::canTransitionTo(Player::PlayerState targetState) {
 }
 
 void Player::resetComponents() {
-    // 重置组件（
-    demuxer.reset();
-    videoDecoder.reset();
-//    renderThread.reset();
-//    renderer.reset();
+    //
+    if (demuxer) {
+        demuxer->pause();
+    }
+    if (videoDecoder) {
+        videoDecoder->pause();
+    }
+    if (renderThread) {
+        renderThread->pause();
+    }
 
     // 重置队列
-    videoPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
-    audioPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
-    videoFrameQueue = std::make_shared<SafeQueue<AVFrame*>>();
+//    videoPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
+//    audioPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
+//    videoFrameQueue = std::make_shared<SafeQueue<AVFrame*>>();
 
 }
 
 void Player::startMediaLoading() {
-    demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
-
     demuxer->open(mediaPath);
-
 }
 
 void Player::prepareDecoders() {
@@ -282,24 +298,28 @@ void Player::prepareDecoders() {
     }
 }
 
-void prepareRenderer() {
-
-}
 void Player::startPlayback() {
+    if (previousState == PlayerState::PAUSED) {
+        // 暂停后重新播放
+        if (demuxer) demuxer->resume();
+        if (videoDecoder) videoDecoder->resume();
+        if (renderThread) renderThread->resume();
+    } else {
+        // 初次播放
+        // 启动解封装线程
+        if (demuxer && !demuxer->isRunning()) {
+            demuxer->start();
+        }
 
-    //  启动解封装线程
-    if (demuxer && !demuxer->isRunning()) {
-        demuxer->start();
-    }
+        // 启动视频解码线程
+        if (videoDecoder && !videoDecoder->isRunning()) {
+            videoDecoder->start();
+        }
 
-    // 启动视频解码线程
-    if (videoDecoder && !videoDecoder->isRunning()) {
-        videoDecoder->start();
-    }
-
-    // 启动渲染线程
-    if (renderThread && !renderThread->isRunning()) {
-        renderThread->start(renderer.get(), eglCore.get());
+        // 启动渲染线程
+        if (renderThread && !renderThread->isRunning()) {
+            renderThread->start(renderer.get(), eglCore.get());
+        }
     }
 }
 

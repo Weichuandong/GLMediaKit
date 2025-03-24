@@ -57,8 +57,11 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
     }
 
     AVPacket* packet = nullptr;
+    auto lastLogTime = std::chrono::steady_clock::now();
+    uint16_t frameCount = 0;
 
     while (!exitRequested) {
+        PerformanceTimer timer("Decoder");
         // 检查暂停状态
         {
             std::unique_lock<std::mutex> lock(mtx);
@@ -70,7 +73,7 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
         if (exitRequested) break;
 
         // 从队列获取数据包
-        if (!videoPackedQueue->pop(packet)) {
+        if (!videoPackedQueue->pop(packet, 10)) {
             continue;
         }
 
@@ -118,12 +121,29 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
             if (!videoFrameQueue->push(frameCopy)) {
                 // 队列满，丢弃帧
                 av_frame_free(&frameCopy);
-                printf("Frame queue full, dropping frame\n");
+                LOGI("Frame queue full, dropping frame\n");
+            }
+            frameCount++;
+            if (videoFrameQueue->getSize() > 30) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            } else if (videoFrameQueue->getSize() > 80) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             // 重用同一个frame对象接收下一帧
             av_frame_unref(frame);
         }
 
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
+        if (elapsed.count() >= 3) {
+            LOGI("解码统计: %d帧/%ds (%.2f帧/秒), 视频帧队列大小: %d",
+                 frameCount, (int)elapsed.count(),
+                 frameCount/(float)elapsed.count(),
+                 videoFrameQueue->getSize());
+            frameCount = 0;
+            lastLogTime = now;
+        }
+        timer.logElapsed("解码一帧");
         av_frame_free(&frame);
 
         // 处理接收帧错误
@@ -194,7 +214,7 @@ void FFmpegVideoDecoder::handleSpecialPacket(AVPacket *packet) {
         // 向帧队列传递EOF标志
         AVFrame* eofFrame = av_frame_alloc();
         eofFrame->pict_type = AV_PICTURE_TYPE_NONE; // 使用特殊值标记EOF
-        if (!videoFrameQueue->push(eofFrame)) {
+        if (!videoFrameQueue->push(eofFrame, 10)) {
             av_frame_free(&eofFrame);
         }
     }

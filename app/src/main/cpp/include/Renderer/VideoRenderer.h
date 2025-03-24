@@ -14,6 +14,7 @@ extern "C" {
 #include "core/SafeQueue.hpp"
 #include "OffscreenRenderer.h"
 #include "EGL/EGLCore.h"
+#include "core/PerformceTimer.hpp"
 
 #include <memory>
 #include <thread>

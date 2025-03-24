@@ -14,6 +14,7 @@
 
 #include "IVideoDecoder.h"
 #include "core/SafeQueue.hpp"
+#include "core/PerformceTimer.hpp"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegVideoDecoder", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegVideoDecoder", __VA_ARGS__)

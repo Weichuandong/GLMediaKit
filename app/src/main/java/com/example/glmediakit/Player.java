@@ -32,8 +32,6 @@ public class Player implements SurfaceListener {
 
     private native void nativePause(long handle);
 
-    private native void nativeResume(long handle);
-
     private native void nativeStop(long handle);
 
     private native void nativeRelease(long handle);
@@ -76,14 +74,6 @@ public class Player implements SurfaceListener {
             return;
         }
         nativePause(nativeHandle);
-    }
-
-    public void resume() {
-        if (nativeHandle == 0) {
-            Log.e(TAG, "Player don't initialized");
-            return;
-        }
-        nativeResume(nativeHandle);
     }
 
     public void stop() {

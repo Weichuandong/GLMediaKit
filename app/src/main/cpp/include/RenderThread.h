@@ -10,9 +10,10 @@ class MediaManager;
 #include <thread>
 #include <atomic>
 #include <mutex>
+#include <queue>
+
 #include "Renderer/IRenderer.h"
 #include "EGL/EGLCore.h"
-//#include "MediaManager.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "RenderThread", __VA_ARGS__)
 
@@ -24,22 +25,30 @@ public:
     void start(IRenderer* renderer, EGLCore* eglCore);
     void stop();
     bool isRunning() const;
-    void pause() const;
+    void pause();
+    void resume();
 
+    void postTask(const std::function<void()>& task);
 private:
     std::thread thread;
-    std::atomic<bool> running;
-    std::mutex mutex;
 
     IRenderer* renderer;
-//    EGLSurface eglSurface;
     EGLCore* eglCore;
 
-    // 添加对EGLManager的引用
-//    MediaManager* eglManager;
-    bool rendererInitialized;
-
     void renderLoop();
+
+    // 状态控制
+    std::atomic<bool> isPaused{false};
+    std::atomic<bool> exitRequest{false};
+
+    std::mutex mtx;
+    std::condition_variable pauseCond;
+
+    // GL任务队列
+    std::queue<std::function<void()>> glTasks;
+    std::mutex taskMtx;
+    std::condition_variable taskCond;
+    void executeGLTasks();
 };
 
 

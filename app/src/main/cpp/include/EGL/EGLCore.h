@@ -8,6 +8,7 @@
 #include <EGL/egl.h>
 #include <android/native_window_jni.h>
 #include <android/log.h>
+#include <mutex>
 
 #define LOG_TAG "EGLCore"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -42,11 +43,14 @@ public:
     // 获取当前EGL上下文
     EGLContext getContext() const { return eglContext; }
 
+    // 获取Surface
+    EGLSurface getSurface() const { return eglSurface; }
 private:
     EGLDisplay eglDisplay;
     EGLContext eglContext;
     EGLConfig eglConfig;
     EGLSurface eglSurface;
+    std::mutex surfaceMtx;
 
     ANativeWindow* mWindow;
 };

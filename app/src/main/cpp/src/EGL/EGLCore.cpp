@@ -88,16 +88,21 @@ EGLSurface EGLCore::createOffscreenSurface(int width, int height) {
 }
 
 bool EGLCore::makeCurrent() {
+    std::lock_guard<std::mutex> lk(surfaceMtx);
     return eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
 }
 
 bool EGLCore::swapBuffers() {
+    std::lock_guard<std::mutex> lk(surfaceMtx);
     return eglSwapBuffers(eglDisplay, eglSurface);
 }
 
 void EGLCore::destroySurface() {
+    std::lock_guard<std::mutex> lk(surfaceMtx);
     if (eglSurface != EGL_NO_SURFACE) {
+        eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         eglDestroySurface(eglDisplay, eglSurface);
+        eglSurface = EGL_NO_SURFACE;
     }
 
     // 释放窗口
