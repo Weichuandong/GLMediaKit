@@ -21,7 +21,8 @@ project("GLMediaKit")
 # is preferred for the same purpose.
 #
 # 导入FFmpeg库
-set(FFMPEG_LIBS avcodec avfilter avformat avutil swscale swresample)
+set(FFMPEG_LIBS avcodec avfilter avformat avutil swscale swresample postproc)
+message("ANDROID_ABI = ${ANDROID_ABI}")
 
 foreach(LIB ${FFMPEG_LIBS})
     add_library(${LIB} SHARED IMPORTED)
@@ -34,6 +35,8 @@ find_library(EGL-lib EGL)
 find_library(android-lib android)
 find_library(log-lib log)
 
+set(FDK_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ffmpeg/lib/${ANDROID_ABI}/libfdk-aac.so)
+set(X264_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ffmpeg/lib/${ANDROID_ABI}/libx264.so)
 # In order to load a library into your app from Java/Kotlin, you must call
 # System.loadLibrary() and pass the name of the library defined here;
 # for GameActivity/NativeActivity derived applications, the same library name must be
@@ -51,6 +54,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Renderer/ShaderManager.cpp
         src/Renderer/ImageRenderer.cpp
         src/Renderer/OffscreenRenderer.cpp
+        src/Renderer/VideoRenderer.cpp
         src/Renderer/Geometry/Geometry.cpp
         src/Renderer/Geometry/Triangle.cpp
         src/Renderer/Geometry/Square.cpp
@@ -60,6 +64,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/EGL/EGLCore.cpp
 
         src/Decoder/FFmpegVideoDecoder.cpp
+        src/Demuxer/FFmpegDemuxer.cpp
         )
 
 ## include
@@ -75,7 +80,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         jnigraphics
+
+#        ${X264_LIBS}
+#        ${FDK_LIBS}
         ${GLESV3-lib}
         ${EGL-lib}
         ${android-lib}
-        ${log-lib})
+        ${log-lib}
+        ${FFMPEG_LIBS}
+)

@@ -27,7 +27,19 @@
         android:text="播放"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.272"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/surface_container"
+        app:layout_constraintVertical_bias="0.512" />
+
+    <Button
+        android:id="@+id/pkVideo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="选择视频"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.065"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/surface_container"
         app:layout_constraintVertical_bias="0.512" />
@@ -39,7 +51,7 @@
         android:text="暂停"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.749"
+        app:layout_constraintHorizontal_bias="0.938"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/surface_container"
         app:layout_constraintVertical_bias="0.512" />

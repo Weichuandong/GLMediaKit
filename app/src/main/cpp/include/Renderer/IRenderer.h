@@ -9,6 +9,12 @@
 
 class IRenderer {
 public:
+    enum class ScalingMode {
+        FIT,    // 适应模式（保持比例，可能有黑边）
+        FILL,   // 填充模式（保持比例，可能裁剪）
+        STRETCH // 拉伸模式（忽略比例，填满屏幕）
+    };
+
     virtual ~IRenderer() = default;
 
     // 初始化渲染器
@@ -23,6 +29,7 @@ public:
     // 释放资源
     virtual void release() = 0;
 
+    virtual void setScaleMode(ScalingMode mode) = 0;
 };
 
 #endif //GLMEDIAKIT_IRENDERER_H

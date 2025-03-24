@@ -7,9 +7,7 @@
 RenderThread::RenderThread()
         : running(false),
           renderer(nullptr),
-//          eglSurface(EGL_NO_SURFACE),
           eglCore(nullptr),
-//          eglManager(nullptr),
           rendererInitialized(false){
 }
 
@@ -21,13 +19,12 @@ void RenderThread::start(IRenderer* r, EGLCore* core) {
     if (running) {
         return;
     }
+    LOGI("RenderThread : start render thread");
 
     std::lock_guard<std::mutex> lock(mutex);
     renderer = r;
-//    eglSurface = surface;
     eglCore = core;
     running = true;
-//    eglManager = manager;
 
     thread = std::thread(&RenderThread::renderLoop, this);
 }
@@ -65,26 +62,23 @@ void RenderThread::renderLoop() {
     }
 
     while (running) {
+        //判断是否暂停
+        {
+
+        }
+
         std::lock_guard<std::mutex> lock(mutex);
-
-//        // 检查是否处理尺寸变化
-//        int width, height;
-//        if (eglManager->checkAndResetSurfaceChanged(width, height)) {
-//            if (renderer) {
-//                renderer->onSurfaceChanged(width, height);
-//            }
-//        }
-
         if (renderer) {
             renderer->onDrawFrame();
         }
-
         // 交换缓冲区
         eglCore->swapBuffers();
-
         // 控制帧率
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // ~60fps
+//        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
     }
-
     LOGI("Render loop stopped");
+}
+
+void RenderThread::pause() const {
+
 }

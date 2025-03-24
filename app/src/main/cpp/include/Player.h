@@ -9,11 +9,16 @@
 #include "Renderer/IRenderer.h"
 #include "Decoder/IVideoDecoder.h"
 #include "RenderThread.h"
-#include "Renderer/GLRenderer.h"
+#include "Renderer/VideoRenderer.h"
 #include "Decoder/FFmpegVideoDecoder.h"
+#include "core/SafeQueue.hpp"
+#include "Demuxer/FFmpegDemuxer.h"
 
 #include <memory>
 #include <android/log.h>
+#include <mutex>
+#include <condition_variable>
+#include <string>
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "Player", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "Player", __VA_ARGS__)
@@ -36,37 +41,78 @@ public:
 
     bool init();
 
-    // prepare
-    void prepare(std::string filePath);
-
-    void playback();
-
-    void pause();
-
-    void stop();
-
-    void release();
-
+    // 控制方法
+    bool prepare(const std::string& filePath);
+    bool playback();
+    bool pause();
+    bool stop();
+    bool release();
+    bool seekTo(double position);
+//
+    // 状态查询
     Player::PlayerState getPlayerState();
+    double getDuration() const;
+//    double getCurrentPosition() const;
+    bool isPlaying() const;
 
+    // 获取视频信息
+    int getVideoWidth() const;
+    int getVideoHeight() const;
+
+    //
     void attachSurface(ANativeWindow* window);
-
     void detachSurface();
-
     void surfaceSizeChanged(int width, int height);
 
+    // 音量控制
+
 private:
-
+    //
     std::unique_ptr<EGLCore> eglCore;
-
     std::shared_ptr<IRenderer> renderer;
-
     std::unique_ptr<IVideoDecoder> videoDecoder;
-
     std::unique_ptr<RenderThread> renderThread;
+    std::unique_ptr<FFmpegDemuxer> demuxer;
 
-    PlayerState state;
+    PlayerState currentState;
+    PlayerState previousState; // 用于Seeking后恢复
+    std::mutex stateMtx;
+    std::condition_variable stateCond;
 
     bool isAttachSurface;
+    std::mutex attachSurfaceMtx;
+    std::condition_variable attachSurfaceCond;
+
+
+    std::string mediaPath;
+    double seekPosition;
+//    double currentPosition;
+    // 相关队列
+    std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
+    std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue;
+    std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue;
+    std::shared_ptr<SafeQueue<AVFrame*>> audioFrameQueue;
+
+    // 状态转换方法
+    void changeState(PlayerState newState);
+    bool canTransitionTo(PlayerState targetState);
+
+    // 组件控制方法
+    void resetComponents();
+    void startMediaLoading();
+    void prepareDecoders();
+    void startPlayback();
+    void pausePlayback();
+    void performSeeking();
+    void handleCompletion();
+    void handleError();
+    void releaseResources();
+
+    // 禁止拷贝构造和赋值
+    Player(const Player&) = delete;
+    Player& operator=(const Player&) = delete;
+
+//    void setFilePath(const std::string& file_path);
+
 };
 #endif //GLMEDIAKIT_PLAYER_H

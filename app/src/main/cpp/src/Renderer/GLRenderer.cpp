@@ -12,10 +12,10 @@ GLRenderer::GLRenderer() :
 }
 
 bool GLRenderer::init() {
-    geometry = std::make_shared<Triangle>();
+//    geometry = std::make_shared<Triangle>();
 //    geometry = std::make_shared<Square>();
 //    geometry = std::make_shared<MovingTriangle>();
-//    geometry = std::make_shared<RotatingTriangle>();
+    geometry = std::make_shared<RotatingTriangle>();
 
     geometry->init();
 
@@ -33,7 +33,7 @@ bool GLRenderer::init() {
     return true;
 }
 
-void  GLRenderer::onSurfaceChanged(int width, int height) {
+void GLRenderer::onSurfaceChanged(int width, int height) {
     mWidth = width;
     mHeight = height;
 

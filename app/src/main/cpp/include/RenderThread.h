@@ -24,6 +24,7 @@ public:
     void start(IRenderer* renderer, EGLCore* eglCore);
     void stop();
     bool isRunning() const;
+    void pause() const;
 
 private:
     std::thread thread;

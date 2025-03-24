@@ -22,7 +22,10 @@ Java_com_example_glmediakit_Player_nativePrepare(JNIEnv *env, jobject thiz, jlon
                                                  jstring file_path) {
     if (handle != 0) {
         auto* player = reinterpret_cast<Player*>(handle);
+        const char* cStr = env->GetStringUTFChars(file_path, NULL);
 
+        player->prepare(cStr);
+        env->ReleaseStringUTFChars(file_path, cStr);
     }
 }
 
@@ -109,3 +112,17 @@ Java_com_example_glmediakit_Player_nativeGetPlayerState(JNIEnv *env, jobject thi
         return static_cast<jint>(player->getPlayerState());
     }
 }
+
+//extern "C"
+//JNIEXPORT void JNICALL
+//Java_com_example_glmediakit_Player_nativeSetFilePath(JNIEnv *env, jobject thiz, jlong handle,
+//                                                     jstring file_path) {
+//    if (handle != 0) {
+//        auto* player = reinterpret_cast<Player*>(handle);
+//        const char* cStr = env->GetStringUTFChars(file_path, NULL);
+//
+//        player->setFilePath(cStr);
+//
+//        env->ReleaseStringUTFChars(file_path, cStr);
+//    }
+//}

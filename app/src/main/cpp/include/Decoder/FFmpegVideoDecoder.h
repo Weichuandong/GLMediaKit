@@ -5,19 +5,73 @@
 #ifndef GLMEDIAKIT_FFMPEGVIDEODECODER_H
 #define GLMEDIAKIT_FFMPEGVIDEODECODER_H
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-#include "libavformat/avformat.h"
-};
 #include <android/log.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
+#include <atomic>
 
 #include "IVideoDecoder.h"
+#include "core/SafeQueue.hpp"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegVideoDecoder", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegVideoDecoder", __VA_ARGS__)
 
 class FFmpegVideoDecoder : public IVideoDecoder {
 public:
+
+    FFmpegVideoDecoder(std::shared_ptr<SafeQueue<AVPacket*>> pktQueue,
+                       std::shared_ptr<SafeQueue<AVFrame*>> frameQueue);
+    ~FFmpegVideoDecoder() override;
+
+
+    // 使用解码器参数配置解码器
+    bool configure(const AVCodecParameters* codecParams) override;
+
+    void start() override;
+
+    void pause() override;
+
+    void resume() override;
+
+    void stop() override;
+
+    bool isRunning() override { return !isPaused && videoDecodeThread.joinable(); }
+
+    int getWidth() override { return mWidth; }
+    int getHeight() override { return mHeight; }
+
+private:
+    AVCodecContext* avCodecContext{nullptr};
+
+    AVRational timeBase;
+    double lastValidPts;
+
+    // 解码线程
+    std::thread videoDecodeThread;
+    void videoDecodeThreadFunc();
+
+    // 状态
+    std::atomic<bool> isPaused;
+    std::atomic<bool> exitRequested;
+    std::mutex mtx;
+    std::condition_variable pauseCond;
+
+    // 数据
+    std::shared_ptr<SafeQueue<AVPacket*>> videoPackedQueue;
+    std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue;
+
+    // 视频属性
+    int mWidth;
+    int mHeight;
+    AVPixelFormat format;
+
+    // 特殊包检查
+    bool isSpecialPacket(const AVPacket* packet) const;
+
+    // 处理特殊包（flush或EOF）
+    void handleSpecialPacket(AVPacket* packet);
 
 };
 
