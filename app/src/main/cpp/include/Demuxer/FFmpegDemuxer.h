@@ -45,7 +45,7 @@ public:
     AVCodecParameters* getAudioCodecParameters();
 
     bool isRunning() const { return !exitRequested && demuxingThread.joinable(); }
-
+    bool isReadying() const { return isReady; }
     bool hasVideo() const;
     bool hasAudio() const;
 private:
@@ -61,10 +61,12 @@ private:
     std::thread demuxingThread;
 
     // 状态
-    std::atomic<bool> isPaused;
-    std::atomic<bool> exitRequested;
-    std::atomic<bool> isEOF;
-    std::atomic<bool> isSeekRequested;
+    std::atomic<bool> isPaused{false};
+    std::atomic<bool> exitRequested{false};
+    std::atomic<bool> isEOF{false};
+    std::atomic<bool> isSeekRequested{false};
+    std::atomic<bool> isReady{false};
+
     std::mutex mtx;
     std::condition_variable pauseCond;
 

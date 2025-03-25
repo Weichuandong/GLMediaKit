@@ -25,6 +25,7 @@ public:
     void start(IRenderer* renderer, EGLCore* eglCore);
     void stop();
     bool isRunning() const;
+    bool isReadying() const;
     void pause();
     void resume();
 
@@ -40,6 +41,7 @@ private:
     // 状态控制
     std::atomic<bool> isPaused{false};
     std::atomic<bool> exitRequest{false};
+    std::atomic<bool> isReady{false};
 
     std::mutex mtx;
     std::condition_variable pauseCond;

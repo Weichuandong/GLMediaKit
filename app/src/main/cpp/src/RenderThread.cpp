@@ -29,6 +29,7 @@ void RenderThread::start(IRenderer* r, EGLCore* core) {
     eglCore = core;
     exitRequest = false;
 
+    isReady = true;
     thread = std::thread(&RenderThread::renderLoop, this);
 }
 
@@ -131,4 +132,8 @@ void RenderThread::executeGLTasks() {
 void RenderThread::postTask(const std::function<void()>& task) {
     std::lock_guard<std::mutex> lock(taskMtx);
     glTasks.emplace(task);
+}
+
+bool RenderThread::isReadying() const {
+    return isReady;
 }

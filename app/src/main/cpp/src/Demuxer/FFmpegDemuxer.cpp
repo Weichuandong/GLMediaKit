@@ -81,6 +81,7 @@ void FFmpegDemuxer::start() {
     isEOF = false;
     exitRequested = false;
     isSeekRequested = false;
+    isReady = true;
 
     // 启动线程
     demuxingThread = std::thread(&FFmpegDemuxer::demuxingThreadFunc, this);
@@ -135,8 +136,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
     uint16_t audioPacketCount{0};
 
     while (!exitRequested) {
-        PerformanceTimer timer("Demux");
-
+//        PerformanceTimer timer("Demux");
         {
             std::unique_lock<std::mutex> lock(mtx);
             while (isPaused && !exitRequested && !isSeekRequested) {
@@ -198,6 +198,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
 
         if(isEOF) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            LOGI("packet is EOF");
             continue;
         }
 
@@ -226,6 +227,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+            LOGE("av_read_frame failed, ret = %d, ", ret);
             continue;
         }
 
@@ -264,7 +266,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
             videoPacketCount = 0;
             lastLogTime = now;
         }
-        timer.logElapsed("解封装一帧");
+//        timer.logElapsed("解封装一帧");
         av_packet_unref(&packet);
     }
 }

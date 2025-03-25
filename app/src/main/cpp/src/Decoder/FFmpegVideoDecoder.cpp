@@ -28,6 +28,7 @@ void FFmpegVideoDecoder::start() {
     LOGI("FFmpegVideoDecoder, start decode thread");
     exitRequested = false;
     isPaused = false;
+    isReady = true;
 
     videoDecodeThread = std::thread(&FFmpegVideoDecoder::videoDecodeThreadFunc, this);
 }
@@ -61,7 +62,7 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
     uint16_t frameCount = 0;
 
     while (!exitRequested) {
-        PerformanceTimer timer("Decoder");
+//        PerformanceTimer timer("Decoder");
         // 检查暂停状态
         {
             std::unique_lock<std::mutex> lock(mtx);
@@ -83,10 +84,10 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
         }
 
         // 检查特殊包（flush或EOF）
-//        if (isSpecialPacket(packet)) {
-//            handleSpecialPacket(packet);
-//            continue;
-//        }
+        if (isSpecialPacket(packet)) {
+            handleSpecialPacket(packet);
+            continue;
+        }
 
         // 发送包到解码器
         int sendResult = avcodec_send_packet(avCodecContext, packet);
@@ -143,7 +144,7 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
             frameCount = 0;
             lastLogTime = now;
         }
-        timer.logElapsed("解码一帧");
+//        timer.logElapsed("解码一帧");
         av_frame_free(&frame);
 
         // 处理接收帧错误
@@ -246,6 +247,7 @@ bool FFmpegVideoDecoder::configure(const AVCodecParameters *codecParams) {
         LOGE("Could not parameters to codecContext");
         return false;
     }
+    avCodecContext->thread_count = 4;
 
     // 打开解码器
     if (avcodec_open2(avCodecContext, codec, nullptr) < 0) {

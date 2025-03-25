@@ -34,6 +34,8 @@ public:
 
     virtual bool isRunning() = 0;
 
+    virtual bool isReadying() = 0;
+
     virtual int getWidth() = 0;
 
     virtual int getHeight() = 0;

@@ -85,8 +85,9 @@ private:
     std::condition_variable attachSurfaceCond;
 
 
-    std::string mediaPath;
+    std::string mediaPath{""};
     double seekPosition{};
+    std::atomic<bool> fileChanged{false};
 //    double currentPosition;
     // 相关队列
     std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;

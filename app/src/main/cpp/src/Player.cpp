@@ -36,6 +36,16 @@ bool Player::init() {
 
 bool Player::prepare(const std::string& filePath) {
     LOGI("Player prepare, filePath = %s", filePath.c_str());
+    if (!mediaPath.empty()) {
+        fileChanged = true;
+        videoPacketQueue->flush();
+        videoFrameQueue->flush();
+        audioPacketQueue->flush();
+        videoPacketQueue->resume();
+        videoFrameQueue->resume();
+        audioPacketQueue->resume();
+//        audioFrameQueue->flush();
+    }
     mediaPath = filePath;
 
     if (!canTransitionTo((PlayerState::PREPARED))) {
@@ -51,7 +61,9 @@ bool Player::playback() {
     // 等待Surface创建并attach
     {
         std::unique_lock<std::mutex> lk(attachSurfaceMtx);
-        attachSurfaceCond.wait(lk, [this]() { return isAttachSurface; });
+        while (!isAttachSurface) {
+            attachSurfaceCond.wait(lk, [this]() { return isAttachSurface; });
+        }
     }
     if (!isAttachSurface) {
         LOGE("not attach surface before playback");
@@ -142,6 +154,9 @@ void Player::surfaceSizeChanged(int width, int height) {
     LOGI("SurfaceSize Changed");
     renderThread->postTask([width, height, this]() {
         renderer->onSurfaceChanged(width, height);
+    });
+    renderThread->postTask([this]() {
+        eglCore->makeCurrent();
     });
 }
 
@@ -234,7 +249,8 @@ bool Player::canTransitionTo(Player::PlayerState targetState) {
                    targetState == PlayerState::SEEKING ||
                    targetState == PlayerState::ERROR ||
                    targetState == PlayerState::STOPPED ||
-                   targetState == PlayerState::INIT;
+                   targetState == PlayerState::INIT ||
+                   targetState == PlayerState::PREPARED;
 
         case PlayerState::SEEKING:
             return targetState == PlayerState::PLAYING ||
@@ -280,11 +296,21 @@ void Player::resetComponents() {
 }
 
 void Player::startMediaLoading() {
+    if (fileChanged){
+        demuxer->stop();
+        demuxer.reset();
+        demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
+    }
     demuxer->open(mediaPath);
 }
 
 void Player::prepareDecoders() {
-    if (!videoDecoder && demuxer->hasVideo()) {
+    if (fileChanged || (!videoDecoder && demuxer->hasVideo())) {
+        if (fileChanged && videoDecoder) {
+            videoDecoder->stop();
+            videoDecoder.reset();
+        }
+
         videoDecoder = std::make_unique<FFmpegVideoDecoder>(videoPacketQueue, videoFrameQueue);
         if (!videoDecoder->configure(demuxer->getVideoCodecParameters())) {
             LOGE("Failed to configure videoDecoder");
@@ -307,23 +333,26 @@ void Player::startPlayback() {
     } else {
         // 初次播放
         // 启动解封装线程
-        if (demuxer && !demuxer->isRunning()) {
+        if (demuxer && !demuxer->isReadying()) {
             demuxer->start();
         }
 
         // 启动视频解码线程
-        if (videoDecoder && !videoDecoder->isRunning()) {
+        if (videoDecoder && !videoDecoder->isReadying()) {
             videoDecoder->start();
         }
 
         // 启动渲染线程
-        if (renderThread && !renderThread->isRunning()) {
+        if (renderThread && !renderThread->isReadying()) {
             renderThread->start(renderer.get(), eglCore.get());
+        } else if (renderThread){
+            renderThread->resume();
         }
     }
 }
 
 void Player::pausePlayback() {
+    LOGI("Player pause playback");
     if (demuxer) {
         demuxer->pause();
     }

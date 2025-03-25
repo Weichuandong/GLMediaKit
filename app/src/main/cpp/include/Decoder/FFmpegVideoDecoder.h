@@ -39,7 +39,7 @@ public:
     void stop() override;
 
     bool isRunning() override { return !isPaused && videoDecodeThread.joinable(); }
-
+    bool isReadying() override { return isReady; }
     int getWidth() override { return mWidth; }
     int getHeight() override { return mHeight; }
 
@@ -54,8 +54,9 @@ private:
     void videoDecodeThreadFunc();
 
     // 状态
-    std::atomic<bool> isPaused;
-    std::atomic<bool> exitRequested;
+    std::atomic<bool> isPaused{false};
+    std::atomic<bool> exitRequested{false};
+    std::atomic<bool> isReady{false};
     std::mutex mtx;
     std::condition_variable pauseCond;
 
