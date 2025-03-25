@@ -48,6 +48,9 @@ public:
     bool isReadying() const { return isReady; }
     bool hasVideo() const;
     bool hasAudio() const;
+    AVRational getAudioTimeBase() const;
+    AVRational getVideoTimeBase() const;
+
 private:
     AVFormatContext* fmt_ctx;
 
@@ -70,7 +73,7 @@ private:
     std::mutex mtx;
     std::condition_variable pauseCond;
 
-    double seekPosition;
+    double seekPosition{};
 
     std::string filePath;
     double duration;

@@ -181,7 +181,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
                     flushPkt->size = 0;
                     flushPkt->stream_index = videoStreamIdx;
                     flushPkt->flags = 0xFFFF;
-                    videoPacketQueue->push(flushPkt, 10);
+                    videoPacketQueue->push(flushPkt, 1);
                 }
                 if (audioPacketQueue && hasAudio()) {
                     AVPacket *flushPkt = av_packet_alloc();
@@ -190,7 +190,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
                     flushPkt->size = 0;
                     flushPkt->stream_index = videoStreamIdx;
                     flushPkt->flags = 0xFFFF;
-                    audioPacketQueue->push(flushPkt, 10);
+                    audioPacketQueue->push(flushPkt, 1);
                 }
             }
             isSeekRequested = false;
@@ -213,7 +213,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
                     eofPkt->size = 0;
                     eofPkt->stream_index = videoStreamIdx;
                     eofPkt->flags = 0xFFFE;
-                    videoPacketQueue->push(eofPkt, 10);
+                    videoPacketQueue->push(eofPkt, 1);
                 }
                 if (audioPacketQueue && hasAudio()) {
                     AVPacket *eofPkt = av_packet_alloc();
@@ -222,7 +222,7 @@ void FFmpegDemuxer::demuxingThreadFunc() {
                     eofPkt->size = 0;
                     eofPkt->stream_index = videoStreamIdx;
                     eofPkt->flags = 0xFFFE;
-                    audioPacketQueue->push(eofPkt, 10);
+                    audioPacketQueue->push(eofPkt, 1);
                 }
             } else {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -236,34 +236,39 @@ void FFmpegDemuxer::demuxingThreadFunc() {
             AVPacket *pktCopy = av_packet_alloc();
             av_packet_ref(pktCopy, &packet);
 
-            if (!videoPacketQueue->push(pktCopy, 10)) {
+            if (!videoPacketQueue->push(pktCopy, 1)) {
                 // 如果push失败
                 av_packet_free(&pktCopy);
             }
             videoPacketCount++;
-            if (videoPacketQueue->getSize() > 30) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(30));
-            } else if (videoPacketQueue->getSize() > 80) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
         } else if (packet.stream_index == audioStreamIdx) {
             AVPacket *pktCopy = av_packet_alloc();
             av_packet_ref(pktCopy, &packet);
 
-            if (!audioPacketQueue->push(pktCopy, 10)) {
+            if (!audioPacketQueue->push(pktCopy, 1)) {
                 av_packet_free(&pktCopy);
             }
             audioPacketCount++;
+        }
+        if (videoPacketQueue->getSize() > 30 && audioPacketQueue->getSize() > 30) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        } else if (videoPacketQueue->getSize() > 80 && audioPacketQueue->getSize() > 80) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
 
         if (elapsed.count() >= 3) {
-            LOGI("解封装统计: %d帧/%ds (%.2f帧/秒), 视频队列大小: %d",
+            LOGI("视频解封装统计: %d帧/%ds (%.2f帧/秒), 视频队列大小: %d",
                  videoPacketCount, (int)elapsed.count(),
                  videoPacketCount/(float)elapsed.count(),
                  videoPacketQueue->getSize());
+            LOGI("音频解封装统计: %d帧/%ds (%.2f帧/秒), 音频队列大小: %d",
+                 audioPacketCount, (int)elapsed.count(),
+                 audioPacketCount/(float)elapsed.count(),
+                 audioPacketQueue->getSize());
             videoPacketCount = 0;
+            audioPacketCount = 0;
             lastLogTime = now;
         }
 //        timer.logElapsed("解封装一帧");
@@ -277,4 +282,18 @@ bool FFmpegDemuxer::hasVideo() const {
 
 bool FFmpegDemuxer::hasAudio() const {
     return audioStreamIdx >= 0;
+}
+
+AVRational FFmpegDemuxer::getAudioTimeBase() const {
+    if (audioStreamIdx > 0 && fmt_ctx && fmt_ctx->streams[audioStreamIdx]) {
+        return fmt_ctx->streams[audioStreamIdx]->time_base;
+    }
+    return AVRational{0, 0};
+}
+
+AVRational FFmpegDemuxer::getVideoTimeBase() const {
+    if (videoStreamIdx > 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
+        return fmt_ctx->streams[videoStreamIdx]->time_base;
+    }
+    return AVRational{0, 0};
 }

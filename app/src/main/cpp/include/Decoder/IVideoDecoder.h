@@ -7,9 +7,9 @@
 
 extern "C"{
 #include <libavcodec/avcodec.h>
-#include "libavformat/avformat.h"
-
-};
+#include <libavformat/avformat.h>
+#include <libswresample/swresample.h>
+}
 #include <string>
 
 class IVideoDecoder {
@@ -17,12 +17,6 @@ public:
     virtual ~IVideoDecoder() = default;
 
     virtual bool configure(const AVCodecParameters* codecParams) = 0;
-
-//    virtual int open() = 0;
-//
-//    virtual int sendPacket(const AVPacket* packet) = 0;
-//
-//    virtual int receiveFrame() = 0;
 
     virtual void start() = 0;
 
@@ -39,6 +33,12 @@ public:
     virtual int getWidth() = 0;
 
     virtual int getHeight() = 0;
+
+    virtual int getSampleRate() = 0;
+
+    virtual int getChannel() = 0;
+
+    virtual int getSampleFormat() = 0;
 };
 
 #endif //GLMEDIAKIT_IVIDEODECODER_H

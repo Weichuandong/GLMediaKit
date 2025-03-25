@@ -11,8 +11,10 @@
 #include "RenderThread.h"
 #include "Renderer/VideoRenderer.h"
 #include "Decoder/FFmpegVideoDecoder.h"
+#include "Decoder/FFMpegAudioDecoder.h"
 #include "core/SafeQueue.hpp"
 #include "Demuxer/FFmpegDemuxer.h"
+#include "SLAudioPlayer.h"
 
 #include <memory>
 #include <android/log.h>
@@ -72,8 +74,10 @@ private:
     std::unique_ptr<EGLCore> eglCore;
     std::shared_ptr<IRenderer> renderer;
     std::unique_ptr<IVideoDecoder> videoDecoder;
+    std::unique_ptr<IVideoDecoder> audioDecoder;
     std::unique_ptr<RenderThread> renderThread;
     std::unique_ptr<FFmpegDemuxer> demuxer;
+    std::unique_ptr<SLAudioPlayer> audioPlayer;
 
     PlayerState currentState;
     PlayerState previousState; // 用于Seeking后恢复

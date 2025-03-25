@@ -42,7 +42,9 @@ public:
     bool isReadying() override { return isReady; }
     int getWidth() override { return mWidth; }
     int getHeight() override { return mHeight; }
-
+    int getSampleRate() override { return -1; };
+    int getChannel() override { return -1; };
+    int getSampleFormat() override { return -1; };
 private:
     AVCodecContext* avCodecContext{nullptr};
 

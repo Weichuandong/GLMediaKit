@@ -8,7 +8,8 @@
 Player::Player():
     videoPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
     audioPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
-    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>()),
+    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(30)),
+    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(30)),
     eglCore(std::make_unique<EGLCore>()),
     renderThread(std::make_unique<RenderThread>()),
     currentState(PlayerState::INIT),
@@ -17,6 +18,7 @@ Player::Player():
 {
     renderer = std::make_shared<VideoRenderer>(videoFrameQueue);
     demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
+    audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue);
 
     init();
 }
@@ -41,10 +43,12 @@ bool Player::prepare(const std::string& filePath) {
         videoPacketQueue->flush();
         videoFrameQueue->flush();
         audioPacketQueue->flush();
+        audioFrameQueue->flush();
         videoPacketQueue->resume();
         videoFrameQueue->resume();
         audioPacketQueue->resume();
-//        audioFrameQueue->flush();
+        audioFrameQueue->flush();
+        audioFrameQueue->resume();
     }
     mediaPath = filePath;
 
@@ -287,7 +291,12 @@ void Player::resetComponents() {
     if (renderThread) {
         renderThread->pause();
     }
-
+    if (audioDecoder) {
+        audioDecoder->pause();
+    }
+    if (audioPlayer) {
+        audioPlayer->pause();
+    }
     // 重置队列
 //    videoPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
 //    audioPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
@@ -319,8 +328,25 @@ void Player::prepareDecoders() {
         }
     }
 
-    if (demuxer->hasAudio()) {
+    if (fileChanged || (!audioDecoder && demuxer->hasAudio())) {
+        if (fileChanged && audioDecoder) {
+            audioDecoder->stop();
+            audioDecoder.reset();
+        }
 
+        audioDecoder = std::make_unique<FFMpegAudioDecoder>(audioPacketQueue, audioFrameQueue);
+        if (!audioDecoder->configure(demuxer->getAudioCodecParameters())) {
+            LOGE("Failed to configure audioDecoder");
+            // 只播放视频
+//            changeState(PlayerState::ERROR);
+//            return;
+        }
+    }
+    if (!audioPlayer->prepare(audioDecoder->getSampleRate(),
+                              audioDecoder->getChannel(),
+                              static_cast<AVSampleFormat>(audioDecoder->getSampleFormat()),
+                              demuxer->getAudioTimeBase())) {
+        LOGE("audioPlayer prepare failed");
     }
 }
 
@@ -330,6 +356,8 @@ void Player::startPlayback() {
         if (demuxer) demuxer->resume();
         if (videoDecoder) videoDecoder->resume();
         if (renderThread) renderThread->resume();
+        if (audioPlayer) audioPlayer->resume();
+        if (audioDecoder) audioDecoder->resume();
     } else {
         // 初次播放
         // 启动解封装线程
@@ -340,6 +368,14 @@ void Player::startPlayback() {
         // 启动视频解码线程
         if (videoDecoder && !videoDecoder->isReadying()) {
             videoDecoder->start();
+        }
+
+        if (audioDecoder && !audioDecoder->isReadying()) {
+            audioDecoder->start();
+        }
+
+        if (audioPlayer) {
+            audioPlayer->start();
         }
 
         // 启动渲染线程
@@ -359,6 +395,14 @@ void Player::pausePlayback() {
 
     if (videoDecoder) {
         videoDecoder->pause();
+    }
+
+    if (audioDecoder) {
+        audioDecoder->pause();
+    }
+
+    if (audioPlayer) {
+        audioPlayer->pause();
     }
 
     if (renderThread) {
@@ -396,17 +440,28 @@ void Player::releaseResources() {
         videoDecoder->stop();
     }
 
+    if (audioDecoder) {
+        audioDecoder->stop();
+    }
+
     if (demuxer) {
         demuxer->stop();
+    }
+
+    if (audioPlayer) {
+        audioPlayer->stop();
     }
 
     videoPacketQueue->flush();
     videoFrameQueue->flush();
     audioPacketQueue->flush();
+    audioFrameQueue->flush();
 
     renderThread.reset();
     videoDecoder.reset();
     demuxer.reset();
+    audioPlayer.reset();
+    audioDecoder.reset();
 }
 
 double Player::getDuration() const {

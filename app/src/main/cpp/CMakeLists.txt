@@ -34,9 +34,8 @@ find_library(GLESV3-lib GLESv3)
 find_library(EGL-lib EGL)
 find_library(android-lib android)
 find_library(log-lib log)
+#find_library(SLES-lib )
 
-set(FDK_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ffmpeg/lib/${ANDROID_ABI}/libfdk-aac.so)
-set(X264_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ffmpeg/lib/${ANDROID_ABI}/libx264.so)
 # In order to load a library into your app from Java/Kotlin, you must call
 # System.loadLibrary() and pass the name of the library defined here;
 # for GameActivity/NativeActivity derived applications, the same library name must be
@@ -49,6 +48,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/RenderThread.cpp
         src/TextureManger.cpp
         src/Player.cpp
+        src/SLAudioPlayer.cpp
 
         src/Renderer/GLRenderer.cpp
         src/Renderer/ShaderManager.cpp
@@ -64,6 +64,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/EGL/EGLCore.cpp
 
         src/Decoder/FFmpegVideoDecoder.cpp
+        src/Decoder/FFMpegAudioDecoder.cpp
         src/Demuxer/FFmpegDemuxer.cpp
         )
 
@@ -80,9 +81,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         jnigraphics
-
-#        ${X264_LIBS}
-#        ${FDK_LIBS}
+        OpenSLES
         ${GLESV3-lib}
         ${EGL-lib}
         ${android-lib}

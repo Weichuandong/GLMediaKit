@@ -137,7 +137,7 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
         if (elapsed.count() >= 3) {
-            LOGI("解码统计: %d帧/%ds (%.2f帧/秒), 视频帧队列大小: %d",
+            LOGI("视频解码统计: %d帧/%ds (%.2f帧/秒), 视频帧队列大小: %d",
                  frameCount, (int)elapsed.count(),
                  frameCount/(float)elapsed.count(),
                  videoFrameQueue->getSize());
@@ -247,7 +247,7 @@ bool FFmpegVideoDecoder::configure(const AVCodecParameters *codecParams) {
         LOGE("Could not parameters to codecContext");
         return false;
     }
-    avCodecContext->thread_count = 4;
+    avCodecContext->thread_count = 8;
 
     // 打开解码器
     if (avcodec_open2(avCodecContext, codec, nullptr) < 0) {
