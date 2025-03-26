@@ -72,8 +72,7 @@ void RenderThread::renderLoop() {
 
     auto lastLogTime = std::chrono::steady_clock::now();
     uint16_t renderFrameCount = 0;
-    double syncThreshold = 0.01;   // 10ms同步阈值
-//    double maxSyncDiff = 0.1;      // 100ms最大允许差异
+    double syncThreshold = 0.02;   // 20ms同步阈值
 
     while (!exitRequest) {
         //判断是否暂停
@@ -96,10 +95,8 @@ void RenderThread::renderLoop() {
                 double masterTime = synchronizer ? synchronizer->getCurrentTime() : videoClock.getCurrentTime();
 
                 // 更新视频时钟
-                if (frame && frame->pts != AV_NOPTS_VALUE) {
-                    double pts = frame->pts * av_q2d(videoTimeBase);
-
-                    videoClock.pts = pts;
+                if (frame->pts != AV_NOPTS_VALUE) {
+                    videoClock.pts = frame->pts * av_q2d(videoTimeBase);
                     videoClock.lastUpdateTime = av_gettime() / 1000000.0;
                     synchronizer->update(videoClock, MediaSynchronizer::SyncSource::VIDEO);
                 }
@@ -146,17 +143,16 @@ void RenderThread::renderLoop() {
 
         renderFrameCount++;
         auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
-        if (elapsed.count() >= 3) {
-            LOGI("渲染统计: %d帧/%ds (%.2f帧/秒)",
-                 renderFrameCount, (int)elapsed.count(),
-                 renderFrameCount/(float)elapsed.count());
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLogTime);
+        if (elapsed.count() >= 3000) {
+            double elapsedSeconds = elapsed.count() / 1000.0;
+            LOGI("渲染统计: %d帧/%.3f秒 (%.2f帧/秒) [精确毫秒:%lld]",
+                 renderFrameCount, elapsedSeconds,
+                 renderFrameCount/elapsedSeconds,
+                 elapsed.count());
             renderFrameCount = 0;
             lastLogTime = now;
         }
-
-        // 控制帧率
-//        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
     }
     LOGI("Render loop stopped");
 }

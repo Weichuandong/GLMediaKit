@@ -10,7 +10,7 @@ Player::Player():
     audioPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
     videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(30)),
     audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(30)),
-    synchronizer(std::make_shared<MediaSynchronizer>()),
+    synchronizer(std::make_shared<MediaSynchronizer>(MediaSynchronizer::SyncSource::AUDIO)),
     eglCore(std::make_unique<EGLCore>()),
     renderer(std::make_shared<VideoRenderer>()),
     currentState(PlayerState::INIT),

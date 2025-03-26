@@ -256,17 +256,18 @@ void FFmpegDemuxer::demuxingThreadFunc() {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLogTime);
 
-        if (elapsed.count() >= 3) {
-            LOGI("视频解封装统计: %d帧/%ds (%.2f帧/秒), 视频队列大小: %d",
-                 videoPacketCount, (int)elapsed.count(),
-                 videoPacketCount/(float)elapsed.count(),
-                 videoPacketQueue->getSize());
-            LOGI("音频解封装统计: %d帧/%ds (%.2f帧/秒), 音频队列大小: %d",
-                 audioPacketCount, (int)elapsed.count(),
-                 audioPacketCount/(float)elapsed.count(),
-                 audioPacketQueue->getSize());
+        if (elapsed.count() >= 3000) {
+            double elapsedSeconds = elapsed.count() / 1000.0;
+            LOGI("视频解封装统计: %d帧/%.3f秒 (%.2f帧/秒), 视频队列大小: %d [精确毫秒:%lld]",
+                 videoPacketCount, elapsedSeconds,
+                 videoPacketCount/elapsedSeconds,
+                 videoPacketQueue->getSize(), elapsed.count());
+            LOGI("音频解封装统计: %d帧/%.3f秒 (%.2f帧/秒), 视频队列大小: %d [精确毫秒:%lld]",
+                 audioPacketCount, elapsedSeconds,
+                 audioPacketCount/elapsedSeconds,
+                 audioPacketQueue->getSize(), elapsed.count());
             videoPacketCount = 0;
             audioPacketCount = 0;
             lastLogTime = now;
@@ -286,6 +287,9 @@ bool FFmpegDemuxer::hasAudio() const {
 
 AVRational FFmpegDemuxer::getAudioTimeBase() const {
     if (audioStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[audioStreamIdx]) {
+        LOGI("Audio timeBase = {%d, %d}",
+             fmt_ctx->streams[audioStreamIdx]->time_base.num,
+             fmt_ctx->streams[audioStreamIdx]->time_base.den);
         return fmt_ctx->streams[audioStreamIdx]->time_base;
     }
     return AVRational{0, 0};
@@ -293,6 +297,9 @@ AVRational FFmpegDemuxer::getAudioTimeBase() const {
 
 AVRational FFmpegDemuxer::getVideoTimeBase() const {
     if (videoStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
+        LOGI("Video timeBase = {%d, %d}",
+             fmt_ctx->streams[videoStreamIdx]->time_base.num,
+             fmt_ctx->streams[videoStreamIdx]->time_base.den);
         return fmt_ctx->streams[videoStreamIdx]->time_base;
     }
     return AVRational{0, 0};

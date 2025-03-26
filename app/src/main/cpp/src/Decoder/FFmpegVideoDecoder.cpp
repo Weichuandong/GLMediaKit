@@ -138,12 +138,13 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
         }
 
         auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - lastLogTime);
-        if (elapsed.count() >= 3) {
-            LOGI("视频解码统计: %d帧/%ds (%.2f帧/秒), 视频帧队列大小: %d",
-                 frameCount, (int)elapsed.count(),
-                 frameCount/(float)elapsed.count(),
-                 videoFrameQueue->getSize());
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLogTime);
+        if (elapsed.count() >= 3000) {
+            double elapsedSeconds = elapsed.count() / 1000.0;
+            LOGI("视频解码统计: %d帧/%.3f秒 (%.2f帧/秒), 视频帧队列大小: %d, [精确毫秒:%lld]",
+                 frameCount, elapsedSeconds,
+                 frameCount/elapsedSeconds,
+                 videoFrameQueue->getSize(), elapsed.count());
             frameCount = 0;
             lastLogTime = now;
         }

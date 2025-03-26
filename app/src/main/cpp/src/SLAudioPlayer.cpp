@@ -423,12 +423,3 @@ void SLAudioPlayer::applyVolume(int16_t *buffer, int numSamples) {
         buffer[i] = (int16_t)(buffer[i] * vol);
     }
 }
-
-//double SLAudioPlayer::getMasterClock() const {
-//    if (!isRunning) return 0.0f;
-//
-//    double currentTime = av_gettime() / 1000000.0;
-//    double elapsed = currentTime - audioClock.lastUpdateTime;
-//
-//    return audioClock.pts + elapsed;
-//}
