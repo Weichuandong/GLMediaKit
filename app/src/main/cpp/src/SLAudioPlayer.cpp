@@ -304,15 +304,16 @@ void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
 
     int bytesFilled = 0;
 
-    // 首先使用之前重采样的数据
+    // 如果之前重采样的数据可用
     if (availableSamples > 0 && resampleBuffer) {
-        int bytesAvailable = availableSamples * outChannels * 2; // 16位立体声
+        int bytesAvailable = availableSamples * outChannels * 2; // 16位立体声(通道数 * 2Byte)
+        // 可以拷贝的字节数由缓冲区大小和可用数据量共同决定
         int bytesToCopy = std::min(size, bytesAvailable);
 
         memcpy(buffer, resampleBuffer, bytesToCopy);
         bytesFilled += bytesToCopy;
 
-        // 更新重采样缓冲区
+        // 如果数据还有剩余
         if (bytesToCopy < bytesAvailable) {
             // 部分使用，移动剩余数据
             memmove(resampleBuffer, resampleBuffer + bytesToCopy,
@@ -324,7 +325,7 @@ void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
         }
     }
 
-    // 继续从队列获取帧并填充缓冲区
+    // 如果缓冲区没有填满
     while (bytesFilled < size) {
         AVFrame* frame = nullptr;
         if (!audioFrameQueue->pop(frame, 0) || !frame) {
@@ -363,10 +364,10 @@ int SLAudioPlayer::resampleAudio(AVFrame *frame, uint8_t *outBuffer, int outSize
             swr_get_delay(swrContext, frame->sample_rate) + frame->nb_samples,
             outSampleRate, frame->sample_rate, AV_ROUND_UP);
 
-    // 计算输出缓冲区大小
+    // 计算输出数据大小
     int outBytes = outSamples * outChannels * 2; // 16位立体声
 
-    // 如果输出大小不足，需要使用中间缓冲区
+    // 当前帧获取的数据量超出outBuffer的接受量
     if (outBytes > outSize) {
         // 确保重采样缓冲区足够大
         if (outBytes > resampleBufferSize) {
