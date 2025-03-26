@@ -21,26 +21,16 @@ extern "C" {
 #include <atomic>
 
 #include "core/SafeQueue.hpp"
+#include "core/IClock.h"
+#include "core/MediaSynchronizer.hpp"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "SLAudioPlayer", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "SLAudioPlayer", __VA_ARGS__)
 
 class SLAudioPlayer {
 public:
-    // 音频时钟结构体
-    struct AudioClock {
-        double pts = 0.0;         // 当前播放时间
-        double lastUpdateTime = 0.0; // 上次更新的系统时间
-
-        double get() {
-            // 当前时间与上次更新的时间差
-            double elapsed = av_gettime() / 1000000.0 - lastUpdateTime;
-            return pts + elapsed; // 返回估计的当前音频时间
-        }
-    };
-
-    explicit SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue);
-
+    explicit SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue,
+                           std::shared_ptr<MediaSynchronizer> sync);
     ~SLAudioPlayer();
 
     // 初始化OpenSL ES并设置音频参数
@@ -57,12 +47,12 @@ public:
     void setVolume(float vol);
     float getVolume() const { return volume.load(); }
 
-    // 获取音频时钟
-    AudioClock& getClock() { return audioClock; }
-
     // 重置重采样缓冲区
     void resetResampleBuffer() { availableSamples = 0; }
     bool isReadying() { return isReady; }
+
+//    // 获取音频时间点
+//    double getMasterClock() const;
 private:
     // OpenSLES 对象
     SLObjectItf engineObj{nullptr};
@@ -104,10 +94,11 @@ private:
     int availableSamples = 0;
 
     // 音频时钟
-    AudioClock audioClock;
-
+    IClock audioClock;
     // 时间基
-    AVRational timeBase = {0, 0};
+    AVRational AudioTimeBase = {0, 0};
+    // 主时钟同步控制
+    std::shared_ptr<MediaSynchronizer> synchronizer;
 
     // 静态回调函数
     static void bufferQueueCallback(SLAndroidSimpleBufferQueueItf bq, void* context);

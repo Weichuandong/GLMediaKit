@@ -4,8 +4,10 @@
 
 #include "SLAudioPlayer.h"
 
-SLAudioPlayer::SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue) :
-    audioFrameQueue(std::move(frameQueue))
+SLAudioPlayer::SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue,
+                             std::shared_ptr<MediaSynchronizer> sync) :
+    audioFrameQueue(std::move(frameQueue)),
+    synchronizer(std::move(sync))
 {
     // 分配音频缓冲区
     for (auto& audioBuffer : audioBuffers) {
@@ -38,7 +40,7 @@ SLAudioPlayer::~SLAudioPlayer() {
 bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format, AVRational r) {
     std::lock_guard<std::mutex> lock(mutex);
 
-    timeBase = r;
+    AudioTimeBase = r;
 
     // 保存输入音频参数
     inSampleRate = sampleRate;
@@ -337,11 +339,13 @@ void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
 
         // 更新音频时钟
         if (frame->pts != AV_NOPTS_VALUE) {
-            double pts = frame->pts * av_q2d(timeBase);
-            double duration = (double)frame->nb_samples / frame->sample_rate;
+            double pts = frame->pts * av_q2d(AudioTimeBase);
 
-            audioClock.pts = pts + duration;
+            // 记录当前时间点
+            audioClock.pts = pts;
             audioClock.lastUpdateTime = av_gettime() / 1000000.0;
+            // 上传到主时钟
+            synchronizer->update(audioClock, MediaSynchronizer::SyncSource::AUDIO);
         }
 
         av_frame_free(&frame);
@@ -419,3 +423,12 @@ void SLAudioPlayer::applyVolume(int16_t *buffer, int numSamples) {
         buffer[i] = (int16_t)(buffer[i] * vol);
     }
 }
+
+//double SLAudioPlayer::getMasterClock() const {
+//    if (!isRunning) return 0.0f;
+//
+//    double currentTime = av_gettime() / 1000000.0;
+//    double elapsed = currentTime - audioClock.lastUpdateTime;
+//
+//    return audioClock.pts + elapsed;
+//}

@@ -5,7 +5,9 @@
 #ifndef GLMEDIAKIT_IRENDERER_H
 #define GLMEDIAKIT_IRENDERER_H
 
-#include <EGL/egl.h>
+extern "C" {
+#include <libavcodec/avcodec.h>
+};
 
 class IRenderer {
 public:
@@ -25,6 +27,7 @@ public:
 
     // 绘制一帧
     virtual void onDrawFrame() = 0;
+    virtual void onDrawFrame(AVFrame* frame) = 0;
 
     // 释放资源
     virtual void release() = 0;

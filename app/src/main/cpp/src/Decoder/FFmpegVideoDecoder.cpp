@@ -118,6 +118,9 @@ void FFmpegVideoDecoder::videoDecodeThreadFunc() {
 
             av_frame_ref(frameCopy, frame);
 
+//            LOGI("Video: frame->pts = %ld, frame->dts = %ld， time_base.num/time_base.den = %d/%d",
+//                 frame->pts, frame->pkt_dts, avCodecContext->time_base.num, avCodecContext->time_base.den);
+
             // 放入帧队列
             if (!videoFrameQueue->push(frameCopy)) {
                 // 队列满，丢弃帧

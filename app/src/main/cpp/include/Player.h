@@ -15,6 +15,7 @@
 #include "core/SafeQueue.hpp"
 #include "Demuxer/FFmpegDemuxer.h"
 #include "SLAudioPlayer.h"
+#include "core/MediaSynchronizer.hpp"
 
 #include <memory>
 #include <android/log.h>
@@ -78,6 +79,7 @@ private:
     std::unique_ptr<RenderThread> renderThread;
     std::unique_ptr<FFmpegDemuxer> demuxer;
     std::unique_ptr<SLAudioPlayer> audioPlayer;
+    std::shared_ptr<MediaSynchronizer> synchronizer;
 
     PlayerState currentState;
     PlayerState previousState; // 用于Seeking后恢复

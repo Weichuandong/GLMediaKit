@@ -285,14 +285,14 @@ bool FFmpegDemuxer::hasAudio() const {
 }
 
 AVRational FFmpegDemuxer::getAudioTimeBase() const {
-    if (audioStreamIdx > 0 && fmt_ctx && fmt_ctx->streams[audioStreamIdx]) {
+    if (audioStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[audioStreamIdx]) {
         return fmt_ctx->streams[audioStreamIdx]->time_base;
     }
     return AVRational{0, 0};
 }
 
 AVRational FFmpegDemuxer::getVideoTimeBase() const {
-    if (videoStreamIdx > 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
+    if (videoStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
         return fmt_ctx->streams[videoStreamIdx]->time_base;
     }
     return AVRational{0, 0};

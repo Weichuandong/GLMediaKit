@@ -4,8 +4,7 @@
 
 #include "Renderer/VideoRenderer.h"
 
-VideoRenderer::VideoRenderer(std::shared_ptr<SafeQueue<AVFrame*>> frameQueue) :
-    videoFrameQueue(std::move(frameQueue)),
+VideoRenderer::VideoRenderer() :
     mode(ScalingMode::FIT)
 {
     LOGI("VideoRenderer::VideoRenderer()");
@@ -73,24 +72,7 @@ void VideoRenderer::onSurfaceChanged(int width, int height) {
 }
 
 void VideoRenderer::onDrawFrame() {
-    if (program == 0) {
-        LOGE("Cannot render: program not initialized");
-        return;
-    }
 
-//    offscreenRenderer.beginRender();
-    glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(program);
-
-    // 更新纹理
-    update_textures();
-
-    glUniform1i(glGetUniformLocation(program, "y_tex"), 0);
-    glUniform1i(glGetUniformLocation(program, "u_tex"), 1);
-    glUniform1i(glGetUniformLocation(program, "v_tex"), 2);
-
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void VideoRenderer::release() {
@@ -162,11 +144,8 @@ void VideoRenderer::create_textures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void VideoRenderer::update_textures() {
-    // 从队列中取出一帧frame
-    AVFrame* frame;
-    videoFrameQueue->pop(frame, 10);
-
+void VideoRenderer::update_textures(AVFrame* frame) {
+    // 根据Frame更新纹理
     if (frame && frame->width > 0 && frame->height > 0) {
         // 视频尺寸变化
         if (frame->width != videoWidth || frame->height != videoHeight) {
@@ -306,4 +285,25 @@ void VideoRenderer::setScaleMode(IRenderer::ScalingMode newMode) {
         }
     }
 
+}
+
+void VideoRenderer::onDrawFrame(AVFrame* frame) {
+    if (program == 0) {
+        LOGE("Cannot render: program not initialized");
+        return;
+    }
+
+//    offscreenRenderer.beginRender();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(program);
+
+    // 更新纹理
+    update_textures(frame);
+
+    glUniform1i(glGetUniformLocation(program, "y_tex"), 0);
+    glUniform1i(glGetUniformLocation(program, "u_tex"), 1);
+    glUniform1i(glGetUniformLocation(program, "v_tex"), 2);
+
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

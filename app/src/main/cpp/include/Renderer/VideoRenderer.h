@@ -5,13 +5,8 @@
 #ifndef GLMEDIAKIT_VIDEORENDERER_H
 #define GLMEDIAKIT_VIDEORENDERER_H
 
-extern "C" {
-#include "libavcodec/avcodec.h"
-};
-
 #include "IRenderer.h"
 #include "ShaderManager.h"
-#include "core/SafeQueue.hpp"
 #include "OffscreenRenderer.h"
 #include "EGL/EGLCore.h"
 #include "core/PerformceTimer.hpp"
@@ -27,7 +22,7 @@ extern "C" {
 
 class VideoRenderer : public IRenderer {
 public:
-    explicit VideoRenderer(std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue);
+    explicit VideoRenderer();
 
     ~VideoRenderer() override;
 
@@ -39,6 +34,7 @@ public:
 
     // 绘制一帧
     void onDrawFrame() override;
+    void onDrawFrame(AVFrame* frame) override;
 
     // 释放资源
     void release() override;
@@ -49,9 +45,6 @@ private:
     ScalingMode mode;
 
     ShaderManager shaderManager;
-
-    // Frame数据
-    std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue;
 
     GLuint program{0};
     GLuint vao{0};
@@ -72,7 +65,7 @@ private:
 
     //
     void create_textures();
-    void update_textures();
+    void update_textures(AVFrame* frame);
 
     void calculateDisplayGeometry();
     bool geometryNeedsChange{false};

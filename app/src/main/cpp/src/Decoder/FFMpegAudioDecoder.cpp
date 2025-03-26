@@ -104,7 +104,7 @@ void FFMpegAudioDecoder::audioDecodeThreadFunc() {
         if (exitRequested) break;
 
         // 从队列获取数据包
-        if (!audioPackedQueue->pop(packet, 10)) {
+        if (!audioPackedQueue->pop(packet, 1)) {
             continue;
         }
 
@@ -141,6 +141,8 @@ void FFMpegAudioDecoder::audioDecodeThreadFunc() {
 
             av_frame_ref(frameCopy, frame);
 
+//            LOGI("Audio: frame->pts = %ld, frame->dts = %ld， time_base.num/time_base.den = %d/%d",
+//                 frame->pts, frame->pkt_dts, avCodecContext->time_base.num, avCodecContext->time_base.den);
             // 放入帧队列
             if (!audioFrameQueue->push(frameCopy)) {
                 // 队列满，丢弃帧

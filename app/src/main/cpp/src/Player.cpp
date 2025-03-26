@@ -10,15 +10,16 @@ Player::Player():
     audioPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
     videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(30)),
     audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(30)),
+    synchronizer(std::make_shared<MediaSynchronizer>()),
     eglCore(std::make_unique<EGLCore>()),
-    renderThread(std::make_unique<RenderThread>()),
+    renderer(std::make_shared<VideoRenderer>()),
     currentState(PlayerState::INIT),
     previousState(PlayerState::INIT),
     isAttachSurface(false)
 {
-    renderer = std::make_shared<VideoRenderer>(videoFrameQueue);
     demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
-    audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue);
+    audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue, synchronizer);
+    renderThread = std::make_unique<RenderThread>(videoFrameQueue,synchronizer),
 
     init();
 }
@@ -380,7 +381,7 @@ void Player::startPlayback() {
 
         // 启动渲染线程
         if (renderThread && !renderThread->isReadying()) {
-            renderThread->start(renderer.get(), eglCore.get());
+            renderThread->start(renderer.get(), eglCore.get(), demuxer->getVideoTimeBase());
         } else if (renderThread){
             renderThread->resume();
         }

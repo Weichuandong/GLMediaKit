@@ -4,16 +4,21 @@
 
 #include "RenderThread.h"
 
-RenderThread::RenderThread()
-        : renderer(nullptr),
-          eglCore(nullptr) {
+RenderThread::RenderThread(std::shared_ptr<SafeQueue<AVFrame*>> frameQueue,
+                           std::shared_ptr<MediaSynchronizer> sync) :
+    videoFrameQueue(std::move(frameQueue)),
+    renderer(nullptr),
+    eglCore(nullptr),
+    synchronizer(std::move(sync))
+{
+
 }
 
 RenderThread::~RenderThread() {
     stop();
 }
 
-void RenderThread::start(IRenderer* r, EGLCore* core) {
+void RenderThread::start(IRenderer* r, EGLCore* core, AVRational rational) {
     if (exitRequest) {
         return;
     }
@@ -24,6 +29,7 @@ void RenderThread::start(IRenderer* r, EGLCore* core) {
         return;
     }
 
+    videoTimeBase = rational;
     isPaused = false;
     renderer = r;
     eglCore = core;
@@ -66,6 +72,8 @@ void RenderThread::renderLoop() {
 
     auto lastLogTime = std::chrono::steady_clock::now();
     uint16_t renderFrameCount = 0;
+    double syncThreshold = 0.01;   // 10ms同步阈值
+//    double maxSyncDiff = 0.1;      // 100ms最大允许差异
 
     while (!exitRequest) {
         //判断是否暂停
@@ -79,7 +87,53 @@ void RenderThread::renderLoop() {
         executeGLTasks();
 
         if (renderer) {
-            renderer->onDrawFrame();
+            // 取AVFrame
+            AVFrame* frame{nullptr};
+            videoFrameQueue->pop(frame, 1);
+
+            if (frame && frame->width && frame->height) {
+                // 添加时钟同步逻辑
+                double masterTime = synchronizer ? synchronizer->getCurrentTime() : videoClock.getCurrentTime();
+
+                // 更新视频时钟
+                if (frame && frame->pts != AV_NOPTS_VALUE) {
+                    double pts = frame->pts * av_q2d(videoTimeBase);
+
+                    videoClock.pts = pts;
+                    videoClock.lastUpdateTime = av_gettime() / 1000000.0;
+                    synchronizer->update(videoClock, MediaSynchronizer::SyncSource::VIDEO);
+                }
+
+                // 计算时间差值
+                double diff = videoClock.pts - masterTime;
+                LOGD("diff = %lf, videoPts = %lf, masterTime = %lf", diff, videoClock.pts, masterTime);
+
+                if (diff <= -syncThreshold) {
+                    // 视频慢
+                    LOGD("video is %lfS slow", fabs(diff));
+                    renderer->onDrawFrame(frame);
+
+                    // 如果视频极其落后
+                    if (diff < -3 * syncThreshold && videoFrameQueue->getSize() > 1) {
+                        LOGW("视频严重落后，考虑丢帧");
+                        // 丢帧逻辑
+
+                    }
+                } else if (diff >= syncThreshold) {
+                    // 视频快
+                    int waitTime = std::min(100, (int)(diff * 1000));
+                    LOGD("video is %lfS fast, sleep %dms", fabs(diff), waitTime);
+
+                    std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
+                    renderer->onDrawFrame(frame);
+                } else {
+                    LOGD("audio and video synchronization");
+                    renderer->onDrawFrame(frame);
+                }
+            } else {
+                // frame无效
+
+            }
         }
 
         // 判断egl是否有效
@@ -102,7 +156,7 @@ void RenderThread::renderLoop() {
         }
 
         // 控制帧率
-        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
+//        std::this_thread::sleep_for(std::chrono::milliseconds(30)); // ~30fps
     }
     LOGI("Render loop stopped");
 }
