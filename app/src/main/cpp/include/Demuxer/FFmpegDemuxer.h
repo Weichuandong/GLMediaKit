@@ -25,18 +25,21 @@ extern "C" {
 
 class FFmpegDemuxer {
 public:
-    FFmpegDemuxer(std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue,
-                  std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue);
+    enum struct PacketType { AUDIO, VIDEO, NONE};
+
+    FFmpegDemuxer();
     ~FFmpegDemuxer();
 
     bool open(const std::string& filePath);
 
     // 控制
-    void start();
-    void pause();
-    void resume();
-    void stop();
+//    void start();
+//    void pause();
+//    void resume();
+//    void stop();
     void seekTo(double position);
+
+    PacketType ReceivePacket(AVPacket* packet);
 
     double getDuration() const { return duration; };
 
@@ -44,7 +47,7 @@ public:
     AVCodecParameters* getVideoCodecParameters();
     AVCodecParameters* getAudioCodecParameters();
 
-    bool isRunning() const { return !exitRequested && demuxingThread.joinable(); }
+//    bool isRunning() const { return !exitRequested && demuxingThread.joinable(); }
     bool isReadying() const { return isReady; }
     bool hasVideo() const;
     bool hasAudio() const;
@@ -57,27 +60,28 @@ private:
     int videoStreamIdx;
     int audioStreamIdx;
 
-    std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
-    std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue;
+//    std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
+//    std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue;
 
     // 线程
-    std::thread demuxingThread;
+//    std::thread demuxingThread;
 
     // 状态
-    std::atomic<bool> isPaused{false};
-    std::atomic<bool> exitRequested{false};
-    std::atomic<bool> isEOF{false};
+//    std::atomic<bool> isPaused{false};
+//    std::atomic<bool> exitRequested{false};
+//    std::atomic<bool> isEOF{false};
     std::atomic<bool> isSeekRequested{false};
     std::atomic<bool> isReady{false};
 
-    std::mutex mtx;
-    std::condition_variable pauseCond;
+//    std::mutex mtx;
+//    std::condition_variable pauseCond;
 
     double seekPosition{};
 
     std::string filePath;
     double duration;
 
-    void demuxingThreadFunc();
+    void release();
+//    void demuxingThreadFunc();
 };
 #endif //GLMEDIAKIT_FFMPEGDEMUXER_H

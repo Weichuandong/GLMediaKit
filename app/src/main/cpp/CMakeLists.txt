@@ -65,7 +65,10 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
         src/Decoder/FFmpegVideoDecoder.cpp
         src/Decoder/FFMpegAudioDecoder.cpp
+
         src/Demuxer/FFmpegDemuxer.cpp
+
+        src/Reader/FFMpegVideoReader.cpp
         )
 
 ## include
@@ -82,6 +85,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         jnigraphics
         OpenSLES
+        mediandk
         ${GLESV3-lib}
         ${EGL-lib}
         ${android-lib}

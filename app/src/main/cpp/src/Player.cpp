@@ -4,22 +4,19 @@
 
 #include "Player.h"
 
-
 Player::Player():
-    videoPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
-    audioPacketQueue(std::make_shared<SafeQueue<AVPacket*>>()),
-    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(30)),
-    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(30)),
+    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(10)),
+    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(10)),
     synchronizer(std::make_shared<MediaSynchronizer>(MediaSynchronizer::SyncSource::AUDIO)),
     eglCore(std::make_unique<EGLCore>()),
-    renderer(std::make_shared<VideoRenderer>()),
+    renderer(std::make_unique<VideoRenderer>()),
     currentState(PlayerState::INIT),
     previousState(PlayerState::INIT),
     isAttachSurface(false)
 {
-    demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
     audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue, synchronizer);
     renderThread = std::make_unique<RenderThread>(videoFrameQueue,synchronizer),
+    reader = std::make_unique<FFMpegVideoReader>(videoFrameQueue, audioFrameQueue),
 
     init();
 }
@@ -41,13 +38,9 @@ bool Player::prepare(const std::string& filePath) {
     LOGI("Player prepare, filePath = %s", filePath.c_str());
     if (!mediaPath.empty()) {
         fileChanged = true;
-        videoPacketQueue->flush();
         videoFrameQueue->flush();
-        audioPacketQueue->flush();
         audioFrameQueue->flush();
-        videoPacketQueue->resume();
         videoFrameQueue->resume();
-        audioPacketQueue->resume();
         audioFrameQueue->flush();
         audioFrameQueue->resume();
     }
@@ -283,70 +276,33 @@ bool Player::canTransitionTo(Player::PlayerState targetState) {
 
 void Player::resetComponents() {
     //
-    if (demuxer) {
-        demuxer->pause();
+    if (reader) {
+        reader->pause();
     }
-    if (videoDecoder) {
-        videoDecoder->pause();
-    }
+
     if (renderThread) {
         renderThread->pause();
     }
-    if (audioDecoder) {
-        audioDecoder->pause();
-    }
+
     if (audioPlayer) {
         audioPlayer->pause();
     }
-    // 重置队列
-//    videoPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
-//    audioPacketQueue = std::make_shared<SafeQueue<AVPacket*>>();
-//    videoFrameQueue = std::make_shared<SafeQueue<AVFrame*>>();
-
 }
 
 void Player::startMediaLoading() {
     if (fileChanged){
-        demuxer->stop();
-        demuxer.reset();
-        demuxer = std::make_unique<FFmpegDemuxer>(videoPacketQueue, audioPacketQueue);
+        reader->stop();
+        reader.reset();
+        reader = std::make_unique<FFMpegVideoReader>(videoFrameQueue, audioFrameQueue);
     }
-    demuxer->open(mediaPath);
+    reader->open(mediaPath);
 }
 
 void Player::prepareDecoders() {
-    if (fileChanged || (!videoDecoder && demuxer->hasVideo())) {
-        if (fileChanged && videoDecoder) {
-            videoDecoder->stop();
-            videoDecoder.reset();
-        }
-
-        videoDecoder = std::make_unique<FFmpegVideoDecoder>(videoPacketQueue, videoFrameQueue);
-        if (!videoDecoder->configure(demuxer->getVideoCodecParameters())) {
-            LOGE("Failed to configure videoDecoder");
-            changeState(PlayerState::ERROR);
-            return;
-        }
-    }
-
-    if (fileChanged || (!audioDecoder && demuxer->hasAudio())) {
-        if (fileChanged && audioDecoder) {
-            audioDecoder->stop();
-            audioDecoder.reset();
-        }
-
-        audioDecoder = std::make_unique<FFMpegAudioDecoder>(audioPacketQueue, audioFrameQueue);
-        if (!audioDecoder->configure(demuxer->getAudioCodecParameters())) {
-            LOGE("Failed to configure audioDecoder");
-            // 只播放视频
-//            changeState(PlayerState::ERROR);
-//            return;
-        }
-    }
-    if (!audioPlayer->prepare(audioDecoder->getSampleRate(),
-                              audioDecoder->getChannel(),
-                              static_cast<AVSampleFormat>(audioDecoder->getSampleFormat()),
-                              demuxer->getAudioTimeBase())) {
+    if (!audioPlayer->prepare(reader->getSampleRate(),
+                              reader->getChannel(),
+                              static_cast<AVSampleFormat>(reader->getSampleFormat()),
+                              reader->getAudioTimeBase())) {
         LOGE("audioPlayer prepare failed");
     }
 }
@@ -354,25 +310,14 @@ void Player::prepareDecoders() {
 void Player::startPlayback() {
     if (previousState == PlayerState::PAUSED) {
         // 暂停后重新播放
-        if (demuxer) demuxer->resume();
-        if (videoDecoder) videoDecoder->resume();
+        if (reader) reader->resume();
         if (renderThread) renderThread->resume();
         if (audioPlayer) audioPlayer->resume();
-        if (audioDecoder) audioDecoder->resume();
     } else {
         // 初次播放
         // 启动解封装线程
-        if (demuxer && !demuxer->isReadying()) {
-            demuxer->start();
-        }
-
-        // 启动视频解码线程
-        if (videoDecoder && !videoDecoder->isReadying()) {
-            videoDecoder->start();
-        }
-
-        if (audioDecoder && !audioDecoder->isReadying()) {
-            audioDecoder->start();
+        if (reader && !reader->isReadying()) {
+            reader->start();
         }
 
         if (audioPlayer) {
@@ -381,7 +326,7 @@ void Player::startPlayback() {
 
         // 启动渲染线程
         if (renderThread && !renderThread->isReadying()) {
-            renderThread->start(renderer.get(), eglCore.get(), demuxer->getVideoTimeBase());
+            renderThread->start(renderer.get(), eglCore.get(), reader->getVideoTimeBase());
         } else if (renderThread){
             renderThread->resume();
         }
@@ -390,16 +335,8 @@ void Player::startPlayback() {
 
 void Player::pausePlayback() {
     LOGI("Player pause playback");
-    if (demuxer) {
-        demuxer->pause();
-    }
-
-    if (videoDecoder) {
-        videoDecoder->pause();
-    }
-
-    if (audioDecoder) {
-        audioDecoder->pause();
+    if (reader) {
+        reader->pause();
     }
 
     if (audioPlayer) {
@@ -414,7 +351,7 @@ void Player::pausePlayback() {
 void Player::performSeeking() {
     pausePlayback();
 
-    demuxer->seekTo(seekPosition);
+    reader->seekTo(seekPosition);
 
     if (previousState == PlayerState::PLAYING) {
         changeState(PlayerState::PLAYING);
@@ -437,50 +374,34 @@ void Player::releaseResources() {
         renderThread->stop();
     }
 
-    if (videoDecoder) {
-        videoDecoder->stop();
-    }
-
-    if (audioDecoder) {
-        audioDecoder->stop();
-    }
-
-    if (demuxer) {
-        demuxer->stop();
+    if (reader) {
+        reader->stop();
     }
 
     if (audioPlayer) {
         audioPlayer->stop();
     }
 
-    videoPacketQueue->flush();
     videoFrameQueue->flush();
-    audioPacketQueue->flush();
     audioFrameQueue->flush();
 
     renderThread.reset();
-    videoDecoder.reset();
-    demuxer.reset();
     audioPlayer.reset();
-    audioDecoder.reset();
+    reader.reset();
 }
 
 double Player::getDuration() const {
-    return demuxer->getDuration();
+    return reader->getDuration();
 }
-
-//double Player::getCurrentPosition() const {
-//    return ;
-//}
 
 bool Player::isPlaying() const {
     return currentState == PlayerState::PLAYING;
 }
 
 int Player::getVideoWidth() const {
-    return videoDecoder->getWidth();
+    return reader->getVideoWidth();
 }
 
 int Player::getVideoHeight() const {
-    return videoDecoder->getHeight();
+    return reader->getVideoHeight();
 }

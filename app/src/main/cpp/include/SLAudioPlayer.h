@@ -29,7 +29,7 @@ extern "C" {
 
 class SLAudioPlayer {
 public:
-    explicit SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue,
+    explicit SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame*>> frameQueue,
                            std::shared_ptr<MediaSynchronizer> sync);
     ~SLAudioPlayer();
 

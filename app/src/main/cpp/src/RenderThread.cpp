@@ -22,7 +22,6 @@ void RenderThread::start(IRenderer* r, EGLCore* core, AVRational rational) {
     if (exitRequest) {
         return;
     }
-    LOGI("RenderThread : start render thread");
 
     if (!r || !core) {
         LOGE("eglcore or renderer is null");
@@ -55,8 +54,7 @@ bool RenderThread::isRunning() const {
 }
 
 void RenderThread::renderLoop() {
-    LOGI("Render loop started");
-
+    LOGI("RenderThread : start render thread");
     // 确保在渲染线程中使用EGL上下文
     if(!eglCore->makeCurrent()) {
         LOGE("Can not makeCurrent");
@@ -146,10 +144,9 @@ void RenderThread::renderLoop() {
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastLogTime);
         if (elapsed.count() >= 3000) {
             double elapsedSeconds = elapsed.count() / 1000.0;
-            LOGI("渲染统计: %d帧/%.3f秒 (%.2f帧/秒) [精确毫秒:%lld]",
+            LOGI("渲染统计: %d帧/%.3f秒 (%.2f帧/秒)",
                  renderFrameCount, elapsedSeconds,
-                 renderFrameCount/elapsedSeconds,
-                 elapsed.count());
+                 renderFrameCount/elapsedSeconds);
             renderFrameCount = 0;
             lastLogTime = now;
         }

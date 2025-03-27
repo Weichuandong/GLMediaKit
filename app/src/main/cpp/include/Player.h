@@ -16,6 +16,7 @@
 #include "Demuxer/FFmpegDemuxer.h"
 #include "SLAudioPlayer.h"
 #include "core/MediaSynchronizer.hpp"
+#include "Reader/FFMpegVideoReader.h"
 
 #include <memory>
 #include <android/log.h>
@@ -56,7 +57,6 @@ public:
     // 状态查询
     Player::PlayerState getPlayerState();
     double getDuration() const;
-//    double getCurrentPosition() const;
     bool isPlaying() const;
 
     // 获取视频信息
@@ -73,12 +73,10 @@ public:
 private:
     //
     std::unique_ptr<EGLCore> eglCore;
-    std::shared_ptr<IRenderer> renderer;
-    std::unique_ptr<IVideoDecoder> videoDecoder;
-    std::unique_ptr<IVideoDecoder> audioDecoder;
+    std::unique_ptr<IRenderer> renderer;
     std::unique_ptr<RenderThread> renderThread;
-    std::unique_ptr<FFmpegDemuxer> demuxer;
     std::unique_ptr<SLAudioPlayer> audioPlayer;
+    std::unique_ptr<FFMpegVideoReader> reader;
     std::shared_ptr<MediaSynchronizer> synchronizer;
 
     PlayerState currentState;
@@ -90,14 +88,10 @@ private:
     std::mutex attachSurfaceMtx;
     std::condition_variable attachSurfaceCond;
 
-
     std::string mediaPath{""};
     double seekPosition{};
     std::atomic<bool> fileChanged{false};
-//    double currentPosition;
     // 相关队列
-    std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
-    std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue;
     std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue;
     std::shared_ptr<SafeQueue<AVFrame*>> audioFrameQueue;
 
