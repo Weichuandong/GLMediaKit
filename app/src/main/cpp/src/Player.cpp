@@ -5,8 +5,8 @@
 #include "Player.h"
 
 Player::Player():
-    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(10)),
-    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(10)),
+    videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(3)),
+    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(3)),
     synchronizer(std::make_shared<MediaSynchronizer>(MediaSynchronizer::SyncSource::AUDIO)),
     eglCore(std::make_unique<EGLCore>()),
     renderer(std::make_unique<VideoRenderer>()),

@@ -16,9 +16,13 @@ extern "C" {
 template<typename T>
 class SafeQueue {
 public:
-    explicit SafeQueue(size_t maxSize = 100) :
+    explicit SafeQueue(size_t maxSize = 3) :
         maxSize(maxSize),
         flushing(false){}
+
+    ~SafeQueue() {
+        flush();    //释放资源
+    }
 
     bool push(const T& item, int timeoutMs = -1) {
         std::unique_lock<std::mutex> lock(mtx);
@@ -86,6 +90,9 @@ public:
     void resume() {
         std::unique_lock<std::mutex> lock(mtx);
         flushing = false;
+        // 唤醒所有可能在等待的线程
+        dataCond.notify_all();
+        spaceCond.notify_all();
     }
 
     int getSize() {
@@ -99,7 +106,7 @@ private:
     std::condition_variable dataCond;
     std::condition_variable spaceCond;
     size_t maxSize;
-    std::atomic<bool> flushing;
+    bool flushing;
 };
 
 #endif //GLMEDIAKIT_SAFEQUEUE_HPP

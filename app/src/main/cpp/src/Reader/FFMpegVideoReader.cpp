@@ -158,15 +158,15 @@ void FFMpegVideoReader::readThreadFunc() {
             LOGI("音频解封装统计: %d帧/%.3f秒 (%.2f帧/秒)",
                  audioPacketCount, elapsed / 1000.0,
                  audioPacketCount / (elapsed / 1000.0f));
-            LOGI("音频解码统计: %d帧/%.3f秒 (%.2f帧/秒)",
+            LOGI("音频解码统计: %d帧/%.3f秒 (%.2f帧/秒), 队列大小: %d",
                  audioFrameCount, elapsed / 1000.0,
-                 audioFrameCount / (elapsed / 1000.0f));
+                 audioFrameCount / (elapsed / 1000.0f), audioFrameQueue->getSize());
             LOGI("视频解封装统计: %d帧/%.3f秒 (%.2f帧/秒)",
                  videoPacketCount, elapsed / 1000.0,
                  videoPacketCount / (elapsed / 1000.0f));
-            LOGI("视频解码统计: %d帧/%.3f秒 (%.2f帧/秒)",
+            LOGI("视频解码统计: %d帧/%.3f秒 (%.2f帧/秒), 队列大小: %d",
                  videoFrameCount, elapsed / 1000.0,
-                 videoFrameCount / (elapsed / 1000.0f));
+                 videoFrameCount / (elapsed / 1000.0f), videoFrameQueue->getSize());
             lastLogTime = now;
             audioPacketCount = audioFrameCount = videoPacketCount = videoFrameCount = 0;
         }

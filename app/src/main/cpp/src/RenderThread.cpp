@@ -86,7 +86,7 @@ void RenderThread::renderLoop() {
         if (renderer) {
             // 取AVFrame
             AVFrame* frame{nullptr};
-            videoFrameQueue->pop(frame, 1);
+            videoFrameQueue->pop(frame);
 
             if (frame && frame->width && frame->height) {
                 // 添加时钟同步逻辑

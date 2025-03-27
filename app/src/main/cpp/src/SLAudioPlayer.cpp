@@ -328,7 +328,7 @@ void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
     // 如果缓冲区没有填满
     while (bytesFilled < size) {
         AVFrame* frame = nullptr;
-        if (!audioFrameQueue->pop(frame, 0) || !frame) {
+        if (!audioFrameQueue->pop(frame) || !frame) {
             // 没有帧可用，用静音填充
             memset(buffer + bytesFilled, 0, size - bytesFilled);
             break;
