@@ -18,7 +18,7 @@ RenderThread::~RenderThread() {
     stop();
 }
 
-void RenderThread::start(IRenderer* r, EGLCore* core, AVRational rational) {
+void RenderThread::start(IRenderer* r, EGLCore* core) {
     if (exitRequest) {
         return;
     }
@@ -28,7 +28,6 @@ void RenderThread::start(IRenderer* r, EGLCore* core, AVRational rational) {
         return;
     }
 
-    videoTimeBase = rational;
     isPaused = false;
     renderer = r;
     eglCore = core;
@@ -108,11 +107,13 @@ void RenderThread::renderLoop() {
                     LOGD("video is %lfS slow", fabs(diff));
                     renderer->onDrawFrame(frame);
 
-                    // 如果视频极其落后
-                    if (diff < -3 * syncThreshold && videoFrameQueue->getSize() > 1) {
-                        LOGW("视频严重落后，考虑丢帧");
+                    if (diff < -10 * syncThreshold && videoFrameQueue->getSize() > 0) {
+                        // 如果视频极其落后
                         // 丢帧逻辑
-
+//                        videoFrameQueue->pop(frame);
+//                        LOGW("video is severely outdated, with a frame loss timestamp of : %f", frame->pts * av_q2d(videoTimeBase));
+//                        av_frame_unref(frame);
+//                        continue;
                     }
                 } else if (diff >= syncThreshold) {
                     // 视频快
@@ -183,4 +184,12 @@ void RenderThread::postTask(const std::function<void()>& task) {
 
 bool RenderThread::isReadying() const {
     return isReady;
+}
+
+void RenderThread::setSync(const std::shared_ptr<MediaSynchronizer>& sync) {
+    synchronizer = sync;
+}
+
+void RenderThread::setTimeBase(const AVRational &timeBase) {
+    videoTimeBase = timeBase;
 }

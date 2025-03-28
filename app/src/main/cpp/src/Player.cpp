@@ -6,7 +6,7 @@
 
 Player::Player():
     videoFrameQueue(std::make_shared<SafeQueue<AVFrame*>>(3)),
-    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(3)),
+    audioFrameQueue(std::make_unique<SafeQueue<AVFrame*>>(10)),
     synchronizer(std::make_shared<MediaSynchronizer>(MediaSynchronizer::SyncSource::AUDIO)),
     eglCore(std::make_unique<EGLCore>()),
     renderer(std::make_unique<VideoRenderer>()),
@@ -39,7 +39,6 @@ bool Player::prepare(const std::string& filePath) {
     if (!mediaPath.empty()) {
         fileChanged = true;
         videoFrameQueue->flush();
-        audioFrameQueue->flush();
         videoFrameQueue->resume();
         audioFrameQueue->flush();
         audioFrameQueue->resume();
@@ -192,7 +191,6 @@ void Player::changeState(Player::PlayerState newState) {
 
         case PlayerState::PREPARED:
             startMediaLoading();
-            prepareDecoders();
             break;
 
         case PlayerState::PLAYING:
@@ -291,18 +289,30 @@ void Player::resetComponents() {
 
 void Player::startMediaLoading() {
     if (fileChanged){
+        // 重置reader
         reader->stop();
         reader.reset();
         reader = std::make_unique<FFMpegVideoReader>(videoFrameQueue, audioFrameQueue);
-    }
-    reader->open(mediaPath);
-}
+        // 重置synchronizer
+        synchronizer.reset();
+        synchronizer = std::make_shared<MediaSynchronizer>();
 
-void Player::prepareDecoders() {
+        // 重新设置RenderThread
+        renderThread->setSync(synchronizer);
+
+        // 重置audioPlayer
+        audioPlayer->stop();
+        audioPlayer.reset();
+        audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue, synchronizer);
+    }
+
+    reader->open(mediaPath);
+    renderThread->setTimeBase(reader->getVideoTimeBase());
+    audioPlayer->setTimeBase(reader->getAudioTimeBase());
+
     if (!audioPlayer->prepare(reader->getSampleRate(),
                               reader->getChannel(),
-                              static_cast<AVSampleFormat>(reader->getSampleFormat()),
-                              reader->getAudioTimeBase())) {
+                              static_cast<AVSampleFormat>(reader->getSampleFormat()))) {
         LOGE("audioPlayer prepare failed");
     }
 }
@@ -320,15 +330,15 @@ void Player::startPlayback() {
             reader->start();
         }
 
-        if (audioPlayer) {
-            audioPlayer->start();
-        }
-
         // 启动渲染线程
         if (renderThread && !renderThread->isReadying()) {
-            renderThread->start(renderer.get(), eglCore.get(), reader->getVideoTimeBase());
+            renderThread->start(renderer.get(), eglCore.get());
         } else if (renderThread){
             renderThread->resume();
+        }
+
+        if (audioPlayer) {
+            audioPlayer->start();
         }
     }
 }

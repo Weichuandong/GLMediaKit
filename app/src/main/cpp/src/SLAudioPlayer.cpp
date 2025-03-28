@@ -37,10 +37,8 @@ SLAudioPlayer::~SLAudioPlayer() {
     }
 }
 
-bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format, AVRational r) {
+bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format) {
     std::lock_guard<std::mutex> lock(mutex);
-
-    AudioTimeBase = r;
 
     // 保存输入音频参数
     inSampleRate = sampleRate;
@@ -423,4 +421,8 @@ void SLAudioPlayer::applyVolume(int16_t *buffer, int numSamples) {
     for (int i = 0; i < numSamples; i++) {
         buffer[i] = (int16_t)(buffer[i] * vol);
     }
+}
+
+void SLAudioPlayer::setTimeBase(const AVRational &timeBase) {
+    AudioTimeBase = timeBase;
 }

@@ -58,10 +58,6 @@ public:
     int getSampleFormat() const { return audioDecoder->getSampleFormat(); }
 
 private:
-//    AVFormatContext* fmt_ctx;
-//    int videoStreamIdx;
-//    int audioStreamIdx;
-
     // 线程
     std::thread readThread;
 

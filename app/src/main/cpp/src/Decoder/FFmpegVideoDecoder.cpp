@@ -67,7 +67,6 @@ int FFmpegVideoDecoder::SendPacket(const AVPacket* packet) {
         char errString[128];
         av_strerror(sendResult, errString, 128);
         LOGE("avcodec_send_packet failed due to '%s'", errString);
-        return sendResult;
     }
 
     return sendResult;
@@ -82,7 +81,6 @@ int FFmpegVideoDecoder::ReceiveFrame(AVFrame* frame) {
         char errString[128];
         av_strerror(ret, errString, 128);
         LOGE("avcodec_receive_frame failed due to '%s'", errString);
-        return ret;
     }
     return ret;
 }

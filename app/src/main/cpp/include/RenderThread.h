@@ -31,7 +31,7 @@ public:
                  std::shared_ptr<MediaSynchronizer> sync);
     ~RenderThread();
 
-    void start(IRenderer* renderer, EGLCore* eglCore, AVRational rational);
+    void start(IRenderer* renderer, EGLCore* eglCore);
     void stop();
     bool isRunning() const;
     bool isReadying() const;
@@ -39,6 +39,8 @@ public:
     void resume();
 
     void postTask(const std::function<void()>& task);
+    void setSync(const std::shared_ptr<MediaSynchronizer>& sync);
+    void setTimeBase(const AVRational& timeBase);
 private:
     std::thread thread;
 

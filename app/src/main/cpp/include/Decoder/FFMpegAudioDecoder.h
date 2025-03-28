@@ -14,6 +14,7 @@
 
 #include "IDecoder.h"
 #include "core/SafeQueue.hpp"
+#include "core/PerformceTimer.hpp"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFMpegAudioDecoder", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFMpegAudioDecoder", __VA_ARGS__)

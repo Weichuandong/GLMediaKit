@@ -102,7 +102,6 @@ private:
     // 组件控制方法
     void resetComponents();
     void startMediaLoading();
-    void prepareDecoders();
     void startPlayback();
     void pausePlayback();
     void performSeeking();

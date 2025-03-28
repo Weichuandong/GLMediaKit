@@ -34,7 +34,7 @@ public:
     ~SLAudioPlayer();
 
     // 初始化OpenSL ES并设置音频参数
-    bool prepare(int sampleRate, int channels, AVSampleFormat format, AVRational r);
+    bool prepare(int sampleRate, int channels, AVSampleFormat format);
 
     // 控制播放
     void start();
@@ -51,8 +51,7 @@ public:
     void resetResampleBuffer() { availableSamples = 0; }
     bool isReadying() { return isReady; }
 
-//    // 获取音频时间点
-//    double getMasterClock() const;
+    void setTimeBase(const AVRational& timeBase);
 private:
     // OpenSLES 对象
     SLObjectItf engineObj{nullptr};

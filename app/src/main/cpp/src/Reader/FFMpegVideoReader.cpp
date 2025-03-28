@@ -119,34 +119,40 @@ void FFMpegVideoReader::readThreadFunc() {
 
         if (exitRequested) break;
 
-        // 获取packet
-        FFmpegDemuxer::PacketType type = demuxer->ReceivePacket(packet);
-        if (type == FFmpegDemuxer::PacketType::NONE) {
-            continue;
-        } else if (type == FFmpegDemuxer::PacketType::AUDIO) {
-            audioPacketCount++;
-            if (audioDecoder->SendPacket(packet) == 0) {
-                while (audioDecoder->ReceiveFrame(audioFrame) == 0) {
-                    AVFrame* cloneFrame = av_frame_clone(audioFrame);
-                    if (!audioFrameQueue->push(cloneFrame)) {
-                        LOGE("Failed to push frame to audioFrameQueue");
-                        av_frame_unref(cloneFrame);
+        {
+            PerformanceTimer timer2("demux + decode");
+            // 获取packet
+            FFmpegDemuxer::PacketType type = demuxer->ReceivePacket(packet);
+            if (type == FFmpegDemuxer::PacketType::NONE) {
+                continue;
+            } else if (type == FFmpegDemuxer::PacketType::AUDIO) {
+                audioPacketCount++;
+                if (audioDecoder->SendPacket(packet) == 0) {
+                    while (audioDecoder->ReceiveFrame(audioFrame) == 0) {
+                        PerformanceTimer timer22("audio receive frame + push");
+                        LOGI("audio 1");
+                        AVFrame* cloneFrame = av_frame_clone(audioFrame);
+                        if (!audioFrameQueue->push(cloneFrame)) {
+                            LOGE("Failed to push frame to audioFrameQueue");
+                            av_frame_unref(cloneFrame);
+                        }
+                        audioFrameCount++;
+                        LOGI("audio 2");
+                        av_frame_unref(audioFrame);
                     }
-                    audioFrameCount++;
-                    av_frame_unref(audioFrame);
                 }
-            }
-        } else if (type == FFmpegDemuxer::PacketType::VIDEO) {
-            videoPacketCount++;
-            if(videoDecoder->SendPacket(packet) == 0) {
-                while (videoDecoder->ReceiveFrame(videoFrame) == 0) {
-                    AVFrame* cloneFrame = av_frame_clone(videoFrame);
-                    if (!videoFrameQueue->push(cloneFrame)) {
-                        LOGE("Failed to push frame to videoFrameQueue");
-                        av_frame_unref(cloneFrame);
+            } else if (type == FFmpegDemuxer::PacketType::VIDEO) {
+                videoPacketCount++;
+                if(videoDecoder->SendPacket(packet) == 0) {
+                    while (videoDecoder->ReceiveFrame(videoFrame) == 0) {
+                        AVFrame* cloneFrame = av_frame_clone(videoFrame);
+                        if (!videoFrameQueue->push(cloneFrame)) {
+                            LOGE("Failed to push frame to videoFrameQueue");
+                            av_frame_unref(cloneFrame);
+                        }
+                        videoFrameCount++;
+                        av_frame_unref(videoFrame);
                     }
-                    videoFrameCount++;
-                    av_frame_unref(videoFrame);
                 }
             }
         }
