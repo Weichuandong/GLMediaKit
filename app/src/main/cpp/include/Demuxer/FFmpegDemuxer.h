@@ -25,63 +25,48 @@ extern "C" {
 
 class FFmpegDemuxer {
 public:
-    enum struct PacketType { AUDIO, VIDEO, NONE};
+    enum struct DemuxerType { AUDIO, VIDEO, NONE};
 
-    FFmpegDemuxer();
+    FFmpegDemuxer(DemuxerType type = DemuxerType::AUDIO);
     ~FFmpegDemuxer();
 
     bool open(const std::string& filePath);
 
     // 控制
-//    void start();
-//    void pause();
-//    void resume();
-//    void stop();
     void seekTo(double position);
 
-    PacketType ReceivePacket(AVPacket* packet);
+    int ReceivePacket(AVPacket* packet);
 
     double getDuration() const { return duration; };
 
     // for decoder
-    AVCodecParameters* getVideoCodecParameters();
-    AVCodecParameters* getAudioCodecParameters();
+    AVCodecParameters* getCodecParameters();
+//    AVCodecParameters* getAudioCodecParameters();
 
-//    bool isRunning() const { return !exitRequested && demuxingThread.joinable(); }
     bool isReadying() const { return isReady; }
     bool hasVideo() const;
     bool hasAudio() const;
-    AVRational getAudioTimeBase() const;
-    AVRational getVideoTimeBase() const;
+    AVRational getTimeBase() const;
+//    AVRational getVideoTimeBase() const;
 
 private:
     AVFormatContext* fmt_ctx;
 
-    int videoStreamIdx;
-    int audioStreamIdx;
-
-//    std::shared_ptr<SafeQueue<AVPacket*>> videoPacketQueue;
-//    std::shared_ptr<SafeQueue<AVPacket*>> audioPacketQueue;
-
-    // 线程
-//    std::thread demuxingThread;
+//    int videoStreamIdx;
+//    int audioStreamIdx;
+    int streamIdx;
 
     // 状态
-//    std::atomic<bool> isPaused{false};
-//    std::atomic<bool> exitRequested{false};
-//    std::atomic<bool> isEOF{false};
     std::atomic<bool> isSeekRequested{false};
     std::atomic<bool> isReady{false};
-
-//    std::mutex mtx;
-//    std::condition_variable pauseCond;
 
     double seekPosition{};
 
     std::string filePath;
     double duration;
 
+    DemuxerType type;
+
     void release();
-//    void demuxingThreadFunc();
 };
 #endif //GLMEDIAKIT_FFMPEGDEMUXER_H

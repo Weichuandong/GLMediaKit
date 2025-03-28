@@ -69,6 +69,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/Demuxer/FFmpegDemuxer.cpp
 
         src/Reader/FFMpegVideoReader.cpp
+        src/Reader/FFmpegAudioReader.cpp
+        src/Reader/FFmpegReader.cpp
         )
 
 ## include

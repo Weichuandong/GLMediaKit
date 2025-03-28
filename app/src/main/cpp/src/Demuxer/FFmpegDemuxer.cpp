@@ -6,10 +6,10 @@
 
 #include <utility>
 
-FFmpegDemuxer::FFmpegDemuxer() :
+FFmpegDemuxer::FFmpegDemuxer(FFmpegDemuxer::DemuxerType type) :
         fmt_ctx(nullptr),
-        videoStreamIdx(-1),
-        audioStreamIdx(-1),
+        streamIdx(-1),
+        type(type),
         duration(0)
 {
 
@@ -47,13 +47,15 @@ bool FFmpegDemuxer::open(const std::string &file_path) {
         return false;
     }
 
-    // 寻找音频和视频流
+    // 寻找音频 或 视频流
     for (int i = 0; i < fmt_ctx->nb_streams; ++i) {
         AVStream* stream = fmt_ctx->streams[i];
-        if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO && videoStreamIdx < 0) {
-            videoStreamIdx = i;
-        } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && audioStreamIdx < 0) {
-            audioStreamIdx = i;
+        if (type == DemuxerType::AUDIO && stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            streamIdx = i;
+            break;
+        } else if ( type == DemuxerType::VIDEO && stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            streamIdx = i;
+            break;
         }
     }
 
@@ -65,10 +67,10 @@ bool FFmpegDemuxer::open(const std::string &file_path) {
     // 打印一些调试信息
     LOGI("Media opened: %s", filePath.c_str());
     LOGI("Duration: %.2f seconds", duration);
-    LOGI("Has video: %s", hasVideo() ? "yes" : "no");
-    LOGI("Has audio: %s", hasAudio() ? "yes" : "no");
+    if (type == DemuxerType::AUDIO) LOGI("Has audio: %s", hasAudio() ? "yes" : "no");
+    if (type == DemuxerType::VIDEO) LOGI("Has video: %s", hasVideo() ? "yes" : "no");
 
-    return videoStreamIdx >= 0 || audioStreamIdx > 0;
+    return streamIdx >= 0;
 }
 
 void FFmpegDemuxer::seekTo(double position) {
@@ -76,61 +78,62 @@ void FFmpegDemuxer::seekTo(double position) {
     seekPosition = position;
 }
 
-AVCodecParameters* FFmpegDemuxer::getVideoCodecParameters() {
-    if (!fmt_ctx || videoStreamIdx < 0) return nullptr;
-    return fmt_ctx->streams[videoStreamIdx]->codecpar;
-}
-
-AVCodecParameters *FFmpegDemuxer::getAudioCodecParameters() {
-    if (!fmt_ctx || videoStreamIdx < 0) return nullptr;
-    return fmt_ctx->streams[audioStreamIdx]->codecpar;
+AVCodecParameters* FFmpegDemuxer::getCodecParameters() {
+    if (!fmt_ctx || streamIdx < 0) return nullptr;
+    return fmt_ctx->streams[streamIdx]->codecpar;
 }
 
 bool FFmpegDemuxer::hasVideo() const {
-    return videoStreamIdx >= 0;
+    return type == DemuxerType::VIDEO && streamIdx >= 0;
 }
 
 bool FFmpegDemuxer::hasAudio() const {
-    return audioStreamIdx >= 0;
+    return type == DemuxerType::AUDIO && streamIdx >= 0;
 }
 
-AVRational FFmpegDemuxer::getAudioTimeBase() const {
-    if (audioStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[audioStreamIdx]) {
-        LOGI("Audio timeBase = {%d, %d}",
-             fmt_ctx->streams[audioStreamIdx]->time_base.num,
-             fmt_ctx->streams[audioStreamIdx]->time_base.den);
-        return fmt_ctx->streams[audioStreamIdx]->time_base;
+AVRational FFmpegDemuxer::getTimeBase() const {
+    if (streamIdx >= 0 && fmt_ctx && fmt_ctx->streams[streamIdx]) {
+        LOGI("TimeBase = {%d, %d}",
+             fmt_ctx->streams[streamIdx]->time_base.num,
+             fmt_ctx->streams[streamIdx]->time_base.den);
+        return fmt_ctx->streams[streamIdx]->time_base;
     }
     return AVRational{0, 0};
 }
 
-AVRational FFmpegDemuxer::getVideoTimeBase() const {
-    if (videoStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
-        LOGI("Video timeBase = {%d, %d}",
-             fmt_ctx->streams[videoStreamIdx]->time_base.num,
-             fmt_ctx->streams[videoStreamIdx]->time_base.den);
-        return fmt_ctx->streams[videoStreamIdx]->time_base;
-    }
-    return AVRational{0, 0};
-}
+//AVRational FFmpegDemuxer::getVideoTimeBase() const {
+//    if (videoStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
+//        LOGI("Video timeBase = {%d, %d}",
+//             fmt_ctx->streams[videoStreamIdx]->time_base.num,
+//             fmt_ctx->streams[videoStreamIdx]->time_base.den);
+//        return fmt_ctx->streams[videoStreamIdx]->time_base;
+//    }
+//    return AVRational{0, 0};
+//}
 
-FFmpegDemuxer::PacketType FFmpegDemuxer::ReceivePacket(AVPacket *packet) {
+int FFmpegDemuxer::ReceivePacket(AVPacket *packet) {
     // 获取Packet, 并且返回类型
-    int ret = av_read_frame(fmt_ctx, packet);
-    if (ret < 0) {
-        char errString[128];
-        av_strerror(ret, errString, 128);
-        LOGE("av_read_frame failed due to '%s'", errString);
-        return PacketType::NONE;
+    int ret;
+    while (true) {
+        ret = av_read_frame(fmt_ctx, packet);
+        if (ret >= 0) {
+            if (packet->stream_index == streamIdx) {
+                // 获取对应流packet
+                break;
+            } else {
+                av_packet_unref(packet);
+                continue;
+            }
+        } else if (ret == AVERROR_EOF) {
+
+        } else {
+            char errString[128];
+            av_strerror(ret, errString, 128);
+            LOGE("av_read_frame failed due to '%s'", errString);
+        }
     }
 
-    if (packet->stream_index == audioStreamIdx) {
-        return PacketType::AUDIO;
-    } else if (packet->stream_index == videoStreamIdx) {
-        return PacketType::VIDEO;
-    }
-
-    return PacketType::NONE;
+    return ret;
 }
 
 void FFmpegDemuxer::release() {

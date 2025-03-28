@@ -16,7 +16,7 @@ Player::Player():
 {
     audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue, synchronizer);
     renderThread = std::make_unique<RenderThread>(videoFrameQueue,synchronizer),
-    reader = std::make_unique<FFMpegVideoReader>(videoFrameQueue, audioFrameQueue),
+    reader = std::make_unique<FFMpegReader>(videoFrameQueue, audioFrameQueue),
 
     init();
 }
@@ -292,7 +292,7 @@ void Player::startMediaLoading() {
         // 重置reader
         reader->stop();
         reader.reset();
-        reader = std::make_unique<FFMpegVideoReader>(videoFrameQueue, audioFrameQueue);
+        reader = std::make_unique<FFMpegReader>(videoFrameQueue, audioFrameQueue);
         // 重置synchronizer
         synchronizer.reset();
         synchronizer = std::make_shared<MediaSynchronizer>();

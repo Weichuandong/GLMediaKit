@@ -16,7 +16,8 @@
 #include "Demuxer/FFmpegDemuxer.h"
 #include "SLAudioPlayer.h"
 #include "core/MediaSynchronizer.hpp"
-#include "Reader/FFMpegVideoReader.h"
+//#include "Reader/FFMpegVideoReader.h"
+#include "Reader/FFmpegReader.h"
 
 #include <memory>
 #include <android/log.h>
@@ -76,7 +77,7 @@ private:
     std::unique_ptr<IRenderer> renderer;
     std::unique_ptr<RenderThread> renderThread;
     std::unique_ptr<SLAudioPlayer> audioPlayer;
-    std::unique_ptr<FFMpegVideoReader> reader;
+    std::unique_ptr<FFMpegReader> reader;
     std::shared_ptr<MediaSynchronizer> synchronizer;
 
     PlayerState currentState;
