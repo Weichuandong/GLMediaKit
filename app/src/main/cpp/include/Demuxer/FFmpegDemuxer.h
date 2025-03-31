@@ -41,19 +41,15 @@ public:
 
     // for decoder
     AVCodecParameters* getCodecParameters();
-//    AVCodecParameters* getAudioCodecParameters();
 
     bool isReadying() const { return isReady; }
     bool hasVideo() const;
     bool hasAudio() const;
     AVRational getTimeBase() const;
-//    AVRational getVideoTimeBase() const;
 
 private:
     AVFormatContext* fmt_ctx;
 
-//    int videoStreamIdx;
-//    int audioStreamIdx;
     int streamIdx;
 
     // 状态

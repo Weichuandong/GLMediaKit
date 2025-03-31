@@ -12,7 +12,7 @@
 #include <queue>
 #include <atomic>
 
-#include "IVideoDecoder.h"
+#include "Decoder/IDecoder.h"
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
 

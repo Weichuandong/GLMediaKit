@@ -1,10 +1,8 @@
 package com.example.glmediakit
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -21,7 +19,6 @@ import java.io.OutputStream
 class MainActivity : AppCompatActivity() {
 
     private lateinit var eglSurfaceView: MediaSurfaceView
-//    private var currentBitmap: Bitmap? = null
     private lateinit var player: Player
 
     // 视频文件选择请求码
@@ -56,22 +53,6 @@ class MainActivity : AppCompatActivity() {
             openVideoPicker();
         }
     }
-
-    // 加载示例图片作为纹理
-//    private fun loadImage() {
-//        try {
-//            // 从资源文件加载图片
-//            currentBitmap = BitmapFactory.decodeResource(resources, R.drawable.sample_image)
-//
-//            // 设置到EGLSurfaceView
-////            eglSurfaceView.setImage(currentBitmap)
-//
-//            // Kotlin中不需要手动回收bitmap，GC会在适当时机回收bitmap
-//        } catch (e: Exception) {
-//            Toast.makeText(this, "加载图片失败: ${e.message}", Toast.LENGTH_SHORT).show()
-//        }
-//    }
-
 
     private fun openVideoPicker() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)

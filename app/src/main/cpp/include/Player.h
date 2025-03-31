@@ -7,7 +7,6 @@
 
 #include "EGL/EGLCore.h"
 #include "Renderer/IRenderer.h"
-#include "Decoder/IVideoDecoder.h"
 #include "RenderThread.h"
 #include "Renderer/VideoRenderer.h"
 #include "Decoder/FFmpegVideoDecoder.h"
@@ -16,7 +15,6 @@
 #include "Demuxer/FFmpegDemuxer.h"
 #include "SLAudioPlayer.h"
 #include "core/MediaSynchronizer.hpp"
-//#include "Reader/FFMpegVideoReader.h"
 #include "Reader/FFmpegReader.h"
 
 #include <memory>

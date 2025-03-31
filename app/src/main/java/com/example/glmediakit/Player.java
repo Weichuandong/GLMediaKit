@@ -44,8 +44,6 @@ public class Player implements SurfaceListener {
 
     private native int nativeGetPlayerState(long handle);
 
-//    private native void nativeSetFilePath(long handle, String filePath);
-
     public Player() {
         System.loadLibrary("GLMediaKit");
 
@@ -127,12 +125,4 @@ public class Player implements SurfaceListener {
         }
         nativeSurfaceDestroyed(nativeHandle);
     }
-
-//    public void setFilePath(String filePath) {
-//        if (nativeHandle == 0) {
-//            Log.e(TAG, "Player don't initialized");
-//            return;
-//        }
-//        nativeSetFilePath(nativeHandle, filePath);
-//    }
 }

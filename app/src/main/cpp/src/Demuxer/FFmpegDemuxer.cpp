@@ -101,16 +101,6 @@ AVRational FFmpegDemuxer::getTimeBase() const {
     return AVRational{0, 0};
 }
 
-//AVRational FFmpegDemuxer::getVideoTimeBase() const {
-//    if (videoStreamIdx >= 0 && fmt_ctx && fmt_ctx->streams[videoStreamIdx]) {
-//        LOGI("Video timeBase = {%d, %d}",
-//             fmt_ctx->streams[videoStreamIdx]->time_base.num,
-//             fmt_ctx->streams[videoStreamIdx]->time_base.den);
-//        return fmt_ctx->streams[videoStreamIdx]->time_base;
-//    }
-//    return AVRational{0, 0};
-//}
-
 int FFmpegDemuxer::ReceivePacket(AVPacket *packet) {
     // 获取Packet, 并且返回类型
     int ret;
