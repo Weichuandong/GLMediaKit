@@ -38,10 +38,6 @@ bool Player::prepare(const std::string& filePath) {
     LOGI("Player prepare, filePath = %s", filePath.c_str());
     if (!mediaPath.empty()) {
         fileChanged = true;
-        videoFrameQueue->flush();
-        videoFrameQueue->resume();
-        audioFrameQueue->flush();
-        audioFrameQueue->resume();
     }
     mediaPath = filePath;
 
@@ -289,27 +285,41 @@ void Player::resetComponents() {
 
 void Player::startMediaLoading() {
     if (fileChanged){
+        // 重置数据
+//        videoFrameQueue->flush();
+//        videoFrameQueue->resume();
+//        audioFrameQueue->flush();
+//        audioFrameQueue->resume();
+//        LOGI("after flush, videoFrameQueue->getSize() = %d, audioFrameQueue->getSize() = %d",
+//             videoFrameQueue->getSize(), audioFrameQueue->getSize());
+        LOGI("reset reader");
         // 重置reader
         reader->stop();
         reader.reset();
         reader = std::make_unique<FFMpegReader>(videoFrameQueue, audioFrameQueue);
+
+        LOGI("reset synchronizer");
         // 重置synchronizer
         synchronizer.reset();
         synchronizer = std::make_shared<MediaSynchronizer>();
 
+        LOGI("reset renderThread");
         // 重新设置RenderThread
         renderThread->setSync(synchronizer);
 
+        LOGI("reset audioPlayer");
         // 重置audioPlayer
         audioPlayer->stop();
         audioPlayer.reset();
         audioPlayer = std::make_unique<SLAudioPlayer>(audioFrameQueue, synchronizer);
     }
 
+    LOGI("reader open");
     reader->open(mediaPath);
     renderThread->setTimeBase(reader->getVideoTimeBase());
     audioPlayer->setTimeBase(reader->getAudioTimeBase());
 
+    LOGI("audioPlayer prepare");
     if (!audioPlayer->prepare(reader->getSampleRate(),
                               reader->getChannel(),
                               static_cast<AVSampleFormat>(reader->getSampleFormat()))) {

@@ -3,6 +3,7 @@ package com.example.glmediakit
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -11,10 +12,11 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
-
+import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : AppCompatActivity() {
 
@@ -53,39 +55,29 @@ class MainActivity : AppCompatActivity() {
             openVideoPicker();
         }
     }
-
-    private fun openVideoPicker() {
-        val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-        intent.type = "video/*"
-        startActivityForResult(intent, REQUEST_VIDEO_FILE);
+    // 在 Activity 中
+    private val videoPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri ?: return@registerForActivityResult
+        handleVideoUri(uri)
     }
-    // 处理文件选择结果
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_VIDEO_FILE && resultCode == Activity.RESULT_OK) {
-            data?.data?.let {uri ->
-                try {
-                    // 获取C++层可以访问的文件路径
-                    val path = getVideoPathFromUri(this, uri)
-                    if (path != null) {
-                        // 检查文件是否存在和可读
-                        val videoFile: File = File(path)
 
-                        if (videoFile.exists() && videoFile.canRead() && videoFile.length() > 0) {
-                            player.prepare(path)
-                            Log.d("VideoPlayer", "文件大小: " + videoFile.length() + " 字节")
-                            // 播放视频
-                        } else {
-                            Log.e("VideoPlayer", "文件无效: $path")
-                        }
-                        Toast.makeText(this, "已选择视频: $path", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "无法创建临时文件", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(this, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+    // 打开视频选择器
+    fun openVideoPicker() {
+        videoPickerLauncher.launch("video/*")
+    }
+
+    private fun handleVideoUri(uri: Uri) {
+        try {
+            contentResolver.openFileDescriptor(uri, "r")?.use {
+                // 将文件描述符转换为路径后传递给 C++ 播放器
+                val path = getVideoPathFromUri(this, uri)
+                player.prepare(path)
+                Toast.makeText(this, "已选择视频: $uri", Toast.LENGTH_SHORT).show()
+            } ?: run {
+                Toast.makeText(this, "无法访问文件内容", Toast.LENGTH_SHORT).show()
             }
+        } catch (e: Exception) {
+            Toast.makeText(this, "错误: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

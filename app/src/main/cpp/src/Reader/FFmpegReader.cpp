@@ -75,18 +75,27 @@ void FFMpegReader::start() {
 }
 
 void FFMpegReader::pause() {
+    LOGI("FFmpegReader pause");
     isPaused = true;
+    audioFrameQueue->pause();
+    videoFrameQueue->pause();
 }
 
 void FFMpegReader::resume() {
     isPaused = false;
-    if (hasAudio()) audioPauseCond.notify_one();
-    if (hasVideo()) videoPauseCond.notify_one();
+    if (hasAudio()) audioPauseCond.notify_all();
+    if (hasVideo()) videoPauseCond.notify_all();
 }
 
 void FFMpegReader::stop() {
-    exitRequested =  true;
+    exitRequested = true;
     resume();
+    LOGI("before flush, videoFrameQueue->getSize() = %d, audioFrameQueue->getSize() = %d",
+         videoFrameQueue->getSize(), audioFrameQueue->getSize());
+    audioFrameQueue->flush();
+    videoFrameQueue->flush();
+    audioFrameQueue->resume();
+    videoFrameQueue->resume();
 
     if (audioReadThread.joinable()) {
         audioReadThread.join();
@@ -94,6 +103,9 @@ void FFMpegReader::stop() {
     if (videoReadThread.joinable()) {
         videoReadThread.join();
     }
+
+    LOGI("after stop, videoFrameQueue->getSize() = %d, audioFrameQueue->getSize() = %d",
+         videoFrameQueue->getSize(), audioFrameQueue->getSize());
 }
 
 void FFMpegReader::seekTo(double position) {

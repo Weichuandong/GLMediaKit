@@ -87,7 +87,7 @@ private:
     std::mutex attachSurfaceMtx;
     std::condition_variable attachSurfaceCond;
 
-    std::string mediaPath{""};
+    std::string mediaPath;
     double seekPosition{};
     std::atomic<bool> fileChanged{false};
     // 相关队列

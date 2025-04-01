@@ -41,8 +41,8 @@ bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format)
     inFormat = format;
     inChannelLayout = av_get_default_channel_layout(channels);
 
-    LOGI("AudioPlayer: prepare play format : %dHz, %d通道, 格式%s",
-         sampleRate, channels, av_get_sample_fmt_name(format));
+    LOGI("AudioPlayer: prepare play format : %dHz, %d通道, 格式%s, 通道布局为%ld",
+         inSampleRate, inChannels, av_get_sample_fmt_name(inFormat), inChannelLayout);
 
     // 创建重采样上下文
     swrContext = swr_alloc_set_opts(nullptr,
@@ -50,8 +50,8 @@ bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format)
                                     outFormat,
                                     outSampleRate,
                                     inChannelLayout,
-                                    format,
-                                    sampleRate,
+                                    inFormat,
+                                    inSampleRate,
                                     0, nullptr);
     if (!swrContext) {
         LOGE("AudioPlayer: can't create swrContext");
@@ -121,7 +121,7 @@ bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format)
     SLDataLocator_OutputMix locOutMix = {SL_DATALOCATOR_OUTPUTMIX, outputMixObj};
     SLDataSink audioSnk = {&locOutMix, nullptr};
 
-    // 创建音频播放器
+    // 创建音频播放器, 提前进行接口预定
     const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME,
                                  SL_IID_PLAY};
     const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
@@ -344,7 +344,7 @@ void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
 }
 
 int SLAudioPlayer::resampleAudio(AVFrame *frame, uint8_t *outBuffer, int outSize) {
-    if (!swrContext || !frame) return 0;
+    if (!swrContext || !frame || !frame->extended_data) return 0;
 
     // 计算输出样本数
     int outSamples = av_rescale_rnd(

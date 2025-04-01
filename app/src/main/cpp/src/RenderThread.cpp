@@ -132,6 +132,8 @@ void RenderThread::renderLoop() {
             }
         }
 
+        if (isPaused) continue;
+
         // 判断egl是否有效
         if (eglCore == nullptr || eglCore->getSurface() == EGL_NO_SURFACE) {
             LOGE("当前eglCore无效或未绑定Surface");
@@ -156,6 +158,7 @@ void RenderThread::renderLoop() {
 }
 
 void RenderThread::pause() {
+    LOGI("RenderThread pause");
     isPaused = true;
 }
 

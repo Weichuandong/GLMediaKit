@@ -30,15 +30,16 @@ public:
         if (timeoutMs > 0) {
             // 等待有空间可用或刷新
             if (!spaceCond.wait_for(lock, std::chrono::milliseconds(timeoutMs),
-                                    [this]() { return queue.size() < maxSize || flushing; })) {
+                                    [this]() { return queue.size() < maxSize || flushing || isPaused; })) {
                 return false;
             }
         } else {
-            spaceCond.wait(lock, [this](){ return queue.size() < maxSize || flushing; });
+            spaceCond.wait(lock, [this](){ return queue.size() < maxSize || flushing || isPaused; });
         }
 
         if (flushing) return false;
 
+        // 如果是在暂停状态下，可以超出队列大小，确保不丢数据
         queue.emplace(item);
         dataCond.notify_one();
         return true;
@@ -49,11 +50,11 @@ public:
 
         if (timeoutMs > 0) {
             if (!dataCond.wait_for(lock, std::chrono::milliseconds(timeoutMs),
-                                   [this]() { return !queue.empty() || flushing; })) {
+                                   [this]() { return !queue.empty() || flushing || isPaused; })) {
                 return false;
             }
         } else {
-            dataCond.wait(lock, [this]() { return !queue.empty() || flushing; });
+            dataCond.wait(lock, [this]() { return !queue.empty() || flushing || isPaused; });
         }
 
         if (queue.empty()) return false;
@@ -89,12 +90,20 @@ public:
 
     void resume() {
         std::unique_lock<std::mutex> lock(mtx);
+        isPaused = false;
         flushing = false;
         // 唤醒所有可能在等待的线程
         dataCond.notify_all();
         spaceCond.notify_all();
     }
 
+    // 增加暂停能力，确保使用方不会阻塞在队列中
+    void pause() {
+        std::unique_lock<std::mutex> lock(mtx);
+        isPaused = true;
+        dataCond.notify_all();
+        spaceCond.notify_all();
+    }
     int getSize() {
         std::unique_lock<std::mutex> lock(mtx);
         return queue.size();
@@ -107,6 +116,7 @@ private:
     std::condition_variable spaceCond;
     size_t maxSize;
     bool flushing;
+    std::atomic<bool> isPaused{false};
 };
 
 #endif //GLMEDIAKIT_SAFEQUEUE_HPP

@@ -54,7 +54,7 @@ android {
         includeInBundle = true
     }
     ndkVersion = "21.1.6352462"
-    buildToolsVersion = "35.0.0"
+//    buildToolsVersion = "35.0.0"
 }
 
 dependencies {
@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.activity.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
