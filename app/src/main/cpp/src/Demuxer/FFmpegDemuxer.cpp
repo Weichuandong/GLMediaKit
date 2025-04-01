@@ -51,9 +51,11 @@ bool FFmpegDemuxer::open(const std::string &file_path) {
     for (int i = 0; i < fmt_ctx->nb_streams; ++i) {
         AVStream* stream = fmt_ctx->streams[i];
         if (type == DemuxerType::AUDIO && stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            LOGI("Audio streamIdx = %d", i);
             streamIdx = i;
             break;
         } else if ( type == DemuxerType::VIDEO && stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            LOGI("Video streamIdx = %d", i);
             streamIdx = i;
             break;
         }

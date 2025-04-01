@@ -54,19 +54,20 @@ public:
     void setTimeBase(const AVRational& timeBase);
 private:
     // OpenSLES 对象
+    // 引擎对象
     SLObjectItf engineObj{nullptr};
     SLEngineItf engine{nullptr};
+    // 输出混音对象
     SLObjectItf outputMixObj{nullptr};
+    // 播放器对象
     SLObjectItf playerObj{nullptr};
     SLPlayItf player{nullptr};
     SLAndroidSimpleBufferQueueItf bufferQueue{nullptr};
     SLVolumeItf volumeItf{nullptr};
 
     // 音频缓冲区
-    static const int NUM_BUFFERS = 2;
     static const int BUFFER_SIZE = 8192;  // 缓冲区大小，根据延迟要求调整
-    uint8_t* audioBuffers[NUM_BUFFERS]{};
-    int currentBuffer = 0;
+    uint8_t* audioBuffer;
 
     // 音频数据源
     std::shared_ptr<SafeQueue<AVFrame*>> audioFrameQueue;

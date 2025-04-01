@@ -10,20 +10,15 @@ SLAudioPlayer::SLAudioPlayer(std::shared_ptr<SafeQueue<AVFrame *>> frameQueue,
     synchronizer(std::move(sync))
 {
     // 分配音频缓冲区
-    for (auto& audioBuffer : audioBuffers) {
-        audioBuffer = new uint8_t[BUFFER_SIZE];
-        memset(audioBuffer, 0, BUFFER_SIZE);
-    }
+    audioBuffer = new uint8_t[BUFFER_SIZE];
 }
 
 SLAudioPlayer::~SLAudioPlayer() {
     release();
 
     // 释放音频缓冲区
-    for (auto & audioBuffer : audioBuffers) {
-        delete[] audioBuffer;
-        audioBuffer = nullptr;
-    }
+    delete audioBuffer;
+    audioBuffer = nullptr;
 
     // 释放重采样资源
     if (swrContext) {
@@ -106,7 +101,7 @@ bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format)
     // 配置音频源
     SLDataLocator_AndroidSimpleBufferQueue locBufQ = {
             SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-            NUM_BUFFERS
+            1
     };
 
     SLDataFormat_PCM formatPCM = {
@@ -127,11 +122,12 @@ bool SLAudioPlayer::prepare(int sampleRate, int channels, AVSampleFormat format)
     SLDataSink audioSnk = {&locOutMix, nullptr};
 
     // 创建音频播放器
-    const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME};
-    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[] = {SL_IID_BUFFERQUEUE, SL_IID_VOLUME,
+                                 SL_IID_PLAY};
+    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
 
     result = (*engine)->CreateAudioPlayer(engine, &playerObj, &audioSrc, &audioSnk,
-                                          2, ids, req);
+                                          3, ids, req);
     if (result != SL_RESULT_SUCCESS) {
         LOGE("AudioPlayer: Failed to CreateAudioPlayer: %d", result);
         return false;
@@ -183,11 +179,10 @@ void SLAudioPlayer::start() {
     }
 
     // 清空音频缓冲区
-    memset(audioBuffers[0], 0, BUFFER_SIZE);
-    memset(audioBuffers[1], 0, BUFFER_SIZE);
+    memset(audioBuffer, 0, BUFFER_SIZE);
 
     // 将第一个缓冲区加入队列
-    SLresult result = (*bufferQueue)->Enqueue(bufferQueue, audioBuffers[0], BUFFER_SIZE);
+    SLresult result = (*bufferQueue)->Enqueue(bufferQueue, audioBuffer, BUFFER_SIZE);
     if (result != SL_RESULT_SUCCESS) {
         LOGE("AudioPlayer: can't enqueue audioBuffers: %d", result);
         return;
@@ -275,22 +270,16 @@ void SLAudioPlayer::bufferQueueCallback(SLAndroidSimpleBufferQueueItf bq, void *
 void SLAudioPlayer::processBuffer() {
     if (!isRunning) return;
 
-    // 切换到下一个缓冲区
-    int nextBuffer = (currentBuffer + 1) % NUM_BUFFERS;
-
     // 填充缓冲区
-    fillBuffer(audioBuffers[nextBuffer], BUFFER_SIZE);
+    fillBuffer(audioBuffer, BUFFER_SIZE);
 
     // 将缓冲区加入队列
     SLresult result = (*bufferQueue)->Enqueue(bufferQueue,
-                                              audioBuffers[nextBuffer],
+                                              audioBuffer,
                                               BUFFER_SIZE);
     if (result != SL_RESULT_SUCCESS) {
         LOGE("AudioPlayer: failed to enqueue audioBuffers: %d", result);
     }
-
-    // 更新当前缓冲区索引
-    currentBuffer = nextBuffer;
 }
 
 void SLAudioPlayer::fillBuffer(uint8_t *buffer, int size) {
