@@ -16,13 +16,13 @@
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
 
-#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFMpegAudioDecoder", __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFMpegAudioDecoder", __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegAudioDecoder", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegAudioDecoder", __VA_ARGS__)
 
-class FFMpegAudioDecoder : public IAudioDecoder{
+class FFmpegAudioDecoder : public IAudioDecoder{
 public:
-    FFMpegAudioDecoder();
-    ~FFMpegAudioDecoder() override;
+    FFmpegAudioDecoder();
+    ~FFmpegAudioDecoder() override;
 
     // 使用解码器参数配置解码器
     bool configure(const AVCodecParameters* codecParams) override;

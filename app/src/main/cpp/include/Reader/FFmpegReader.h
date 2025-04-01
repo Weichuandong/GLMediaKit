@@ -20,7 +20,7 @@ extern "C" {
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
 #include "Demuxer/FFmpegDemuxer.h"
-#include "Decoder/FFMpegAudioDecoder.h"
+#include "Decoder/FFmpegAudioDecoder.h"
 #include "Decoder/FFmpegVideoDecoder.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegReader", __VA_ARGS__)

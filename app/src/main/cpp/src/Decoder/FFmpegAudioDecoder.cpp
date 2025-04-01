@@ -1,17 +1,17 @@
 //
 // Created by Weichuandong on 2025/3/25.
 //
-#include "Decoder/FFMpegAudioDecoder.h"
+#include "Decoder/FFmpegAudioDecoder.h"
 
-FFMpegAudioDecoder::FFMpegAudioDecoder() {
+FFmpegAudioDecoder::FFmpegAudioDecoder() {
 
 }
 
-FFMpegAudioDecoder::~FFMpegAudioDecoder() {
+FFmpegAudioDecoder::~FFmpegAudioDecoder() {
     release();
 }
 
-bool FFMpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
+bool FFmpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
     if (!codecParams) {
         LOGE("Invalid codec parameters");
         return false;
@@ -52,7 +52,7 @@ bool FFMpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
     return true;
 }
 
-int FFMpegAudioDecoder::SendPacket(const AVPacket *packet) {
+int FFmpegAudioDecoder::SendPacket(const AVPacket *packet) {
     // 发送包到解码器
     int sendResult = avcodec_send_packet(avCodecContext, packet);
     if (sendResult < 0) {
@@ -64,7 +64,7 @@ int FFMpegAudioDecoder::SendPacket(const AVPacket *packet) {
     return sendResult;
 }
 
-int FFMpegAudioDecoder::ReceiveFrame(AVFrame *frame) {
+int FFmpegAudioDecoder::ReceiveFrame(AVFrame *frame) {
     int ret = avcodec_receive_frame(avCodecContext, frame);
 
     if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
@@ -77,7 +77,7 @@ int FFMpegAudioDecoder::ReceiveFrame(AVFrame *frame) {
     return ret;
 }
 
-void FFMpegAudioDecoder::release() {
+void FFmpegAudioDecoder::release() {
     if (avCodecContext) {
         avcodec_flush_buffers(avCodecContext);
         avcodec_free_context(&avCodecContext);

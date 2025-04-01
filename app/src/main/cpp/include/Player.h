@@ -10,7 +10,7 @@
 #include "RenderThread.h"
 #include "Renderer/VideoRenderer.h"
 #include "Decoder/FFmpegVideoDecoder.h"
-#include "Decoder/FFMpegAudioDecoder.h"
+#include "Decoder/FFmpegAudioDecoder.h"
 #include "core/SafeQueue.hpp"
 #include "Demuxer/FFmpegDemuxer.h"
 #include "SLAudioPlayer.h"

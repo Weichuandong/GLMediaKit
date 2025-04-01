@@ -64,7 +64,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         src/EGL/EGLCore.cpp
 
         src/Decoder/FFmpegVideoDecoder.cpp
-        src/Decoder/FFMpegAudioDecoder.cpp
+        src/Decoder/FFmpegAudioDecoder.cpp
 
         src/Demuxer/FFmpegDemuxer.cpp
 

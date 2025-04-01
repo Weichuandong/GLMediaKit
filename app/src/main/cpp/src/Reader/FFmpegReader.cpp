@@ -35,7 +35,7 @@ bool FFMpegReader::open(const std::string &file_path) {
     }
 
     if (hasAudio()) {
-        audioDecoder = std::make_unique<FFMpegAudioDecoder>();
+        audioDecoder = std::make_unique<FFmpegAudioDecoder>();
         if (!audioDecoder->configure(audioDemuxer->getCodecParameters())) {
             LOGE("failed to configure audioDecoder");
             return false;
