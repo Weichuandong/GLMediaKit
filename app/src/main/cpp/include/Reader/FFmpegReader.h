@@ -22,6 +22,10 @@ extern "C" {
 #include "Demuxer/FFmpegDemuxer.h"
 #include "Decoder/FFmpegAudioDecoder.h"
 #include "Decoder/FFmpegVideoDecoder.h"
+#include "interface/IMediaData.h"
+#include "io/FFmpegPacket.hpp"
+#include "io/FFmpegFrame.hpp"
+#include "interface/IDecoder.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegReader", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegReader", __VA_ARGS__)
@@ -55,7 +59,7 @@ public:
     int getVideoHeight() const { return videoDecoder->getHeight(); }
     int getSampleRate() const { return audioDecoder->getSampleRate(); }
     int getChannel() const { return audioDecoder->getChannel(); }
-    int getSampleFormat() const { return audioDecoder->getSampleFormat(); }
+    SampleFormat getSampleFormat() const { return audioDecoder->getSampleFormat(); }
 
 private:
     // 线程

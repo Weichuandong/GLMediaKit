@@ -5,7 +5,7 @@
 #ifndef GLMEDIAKIT_VIDEORENDERER_H
 #define GLMEDIAKIT_VIDEORENDERER_H
 
-#include "IRenderer.h"
+#include "interface/IRenderer.h"
 #include "ShaderManager.h"
 #include "OffscreenRenderer.h"
 #include "EGL/EGLCore.h"

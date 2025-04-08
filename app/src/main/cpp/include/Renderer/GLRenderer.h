@@ -12,7 +12,7 @@
 
 #include "Geometry/Geometry.h"
 #include "ShaderManager.h"
-#include "IRenderer.h"
+#include "interface/IRenderer.h"
 #include "Geometry/Triangle.h"
 #include "Geometry/Square.h"
 #include "Geometry/MovingTriangle.h"

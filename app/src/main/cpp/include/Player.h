@@ -6,7 +6,7 @@
 #define GLMEDIAKIT_PLAYER_H
 
 #include "EGL/EGLCore.h"
-#include "Renderer/IRenderer.h"
+#include "interface/IRenderer.h"
 #include "RenderThread.h"
 #include "Renderer/VideoRenderer.h"
 #include "Decoder/FFmpegVideoDecoder.h"

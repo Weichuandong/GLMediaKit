@@ -36,7 +36,9 @@ bool FFMpegReader::open(const std::string &file_path) {
 
     if (hasAudio()) {
         audioDecoder = std::make_unique<FFmpegAudioDecoder>();
-        if (!audioDecoder->configure(audioDemuxer->getCodecParameters())) {
+        auto config = DecoderConfig();
+        config.param = audioDemuxer->getCodecParameters();
+        if (!audioDecoder->configure(config)) {
             LOGE("failed to configure audioDecoder");
             return false;
         }
@@ -52,7 +54,9 @@ bool FFMpegReader::open(const std::string &file_path) {
     }
     if (hasVideo()) {
         videoDecoder = std::make_unique<FFmpegVideoDecoder>();
-        if (!videoDecoder->configure(videoDemuxer->getCodecParameters())) {
+        auto config = DecoderConfig();
+        config.param = videoDemuxer->getCodecParameters();
+        if (!videoDecoder->configure(config)) {
             LOGE("failed to configure videoDecoder");
             return false;
         }
@@ -153,8 +157,10 @@ void FFMpegReader::audioReadThreadFunc() {
         // 获取packet
         audioDemuxer->ReceivePacket(audioPacket);
         audioPacketCount++;
-        if (audioDecoder->SendPacket(audioPacket) == 0) {
-            while (audioDecoder->ReceiveFrame(audioFrame) == 0) {
+        std::shared_ptr<IMediaPacket> mediaPacket = std::make_shared<FFmpegPacket>(audioPacket);
+        std::shared_ptr<IMediaFrame> mediaFrame = std::make_shared<FFmpegFrame>(audioFrame);
+        if (audioDecoder->SendPacket(mediaPacket) == 0) {
+            while (audioDecoder->ReceiveFrame(mediaFrame) == 0) {
                 AVFrame* cloneFrame = av_frame_clone(audioFrame);
                 if (!audioFrameQueue->push(cloneFrame)) {
                     LOGE("Failed to push frame to audioFrameQueue");
@@ -203,8 +209,10 @@ void FFMpegReader::videoReadThreadFunc() {
 
             videoDemuxer->ReceivePacket(videoPacket);
             videoPacketCount++;
-            if (videoDecoder->SendPacket(videoPacket) == 0) {
-                while (videoDecoder->ReceiveFrame(videoFrame) == 0) {
+            std::shared_ptr<IMediaPacket> mediaPacket = std::make_shared<FFmpegPacket>(videoPacket);
+            std::shared_ptr<IMediaFrame> mediaFrame = std::make_shared<FFmpegFrame>(videoFrame);
+            if (videoDecoder->SendPacket(mediaPacket) == 0) {
+                while (videoDecoder->ReceiveFrame(mediaFrame) == 0) {
                     AVFrame* cloneFrame = av_frame_clone(videoFrame);
                     if (!videoFrameQueue->push(cloneFrame)) {
                         LOGE("Failed to push frame to audioFrameQueue");

@@ -12,7 +12,7 @@
 #include <queue>
 #include <atomic>
 
-#include "Decoder/IDecoder.h"
+#include "interface/IDecoder.h"
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
 
@@ -25,17 +25,19 @@ public:
     ~FFmpegVideoDecoder() override;
 
     // 使用解码器参数配置解码器
-    bool configure(const AVCodecParameters* codecParams) override;
+    bool configure(const DecoderConfig& codecParams) override;
 
-    int SendPacket(const AVPacket* packet) override ;
+    int SendPacket(const std::shared_ptr<IMediaPacket>& packet) override;
 
-    int ReceiveFrame(AVFrame* frame) override ;
+    int ReceiveFrame(std::shared_ptr<IMediaFrame>& frame) override;
 
     bool isReadying() override { return isReady; }
 
     int getWidth() override { return mWidth; }
 
     int getHeight() override { return mHeight; }
+
+    PixFormat getPixFormat() override;
 
 private:
     AVCodecContext* avCodecContext{nullptr};

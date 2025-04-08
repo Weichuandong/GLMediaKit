@@ -6,7 +6,7 @@
 #define GLMEDIAKIT_IRENDERER_H
 
 extern "C" {
-#include <libavcodec/avcodec.h>
+#include "ffmpeg/include/libavcodec/avcodec.h"
 };
 
 class IRenderer {

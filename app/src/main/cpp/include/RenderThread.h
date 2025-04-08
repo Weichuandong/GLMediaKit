@@ -13,7 +13,7 @@ extern "C" {
 #include <mutex>
 #include <queue>
 
-#include "Renderer/IRenderer.h"
+#include "interface/IRenderer.h"
 #include "EGL/EGLCore.h"
 #include "core/SafeQueue.hpp"
 #include "core/IClock.h"

@@ -12,7 +12,7 @@
 #include <atomic>
 #include <queue>
 
-#include "IDecoder.h"
+#include "interface/IDecoder.h"
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
 
@@ -25,11 +25,11 @@ public:
     ~FFmpegAudioDecoder() override;
 
     // 使用解码器参数配置解码器
-    bool configure(const AVCodecParameters* codecParams) override;
+    bool configure(const DecoderConfig& codecParams) override;
 
-    int SendPacket(const AVPacket* packet) override;
+    int SendPacket(const std::shared_ptr<IMediaPacket>& packet) override;
 
-    int ReceiveFrame(AVFrame* frame) override;
+    int ReceiveFrame(std::shared_ptr<IMediaFrame>& frame) override;
 
     bool isReadying() override { return isReady; }
 
@@ -37,7 +37,7 @@ public:
 
     int getChannel() override { return inChannel; }
 
-    int getSampleFormat() override { return inSampleFormat; }
+    SampleFormat getSampleFormat() override;
 
 private:
     AVCodecContext* avCodecContext{nullptr};
@@ -48,9 +48,6 @@ private:
     int inChannel {0};
     int inSampleRate {0};
     AVSampleFormat inSampleFormat {AV_SAMPLE_FMT_NONE};
-    int outChannel {2};
-    int outSampleRate {44100};
-    AVSampleFormat outSampleFormat {AV_SAMPLE_FMT_S16P};
 
     void release();
 };

@@ -34,7 +34,6 @@ find_library(GLESV3-lib GLESv3)
 find_library(EGL-lib EGL)
 find_library(android-lib android)
 find_library(log-lib log)
-#find_library(SLES-lib )
 
 # In order to load a library into your app from Java/Kotlin, you must call
 # System.loadLibrary() and pass the name of the library defined here;
@@ -44,6 +43,7 @@ find_library(log-lib log)
 add_library(${CMAKE_PROJECT_NAME} SHARED
         # List C/C++ source files with relative paths to this CMakeLists.txt.
         JNIPlayer.cpp
+        JNIHelper.cpp
 
         src/RenderThread.cpp
         src/TextureManger.cpp
@@ -65,6 +65,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
         src/Decoder/FFmpegVideoDecoder.cpp
         src/Decoder/FFmpegAudioDecoder.cpp
+        src/Decoder/MediaCodecDecoderWrapper.cpp
+        src/Decoder/MediaCodecVideoDecoder.cpp
 
         src/Demuxer/FFmpegDemuxer.cpp
 
@@ -73,6 +75,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
 ## include
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+        ${CMAKE_SOURCE_DIR}
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/3rdparty
         ${CMAKE_SOURCE_DIR}/3rdparty/ffmpeg/include

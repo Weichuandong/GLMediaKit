@@ -11,16 +11,16 @@ FFmpegAudioDecoder::~FFmpegAudioDecoder() {
     release();
 }
 
-bool FFmpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
-    if (!codecParams) {
-        LOGE("Invalid codec parameters");
-        return false;
-    }
-
+bool FFmpegAudioDecoder::configure(const DecoderConfig& codecParams) {
+//    if (!codecParams) {
+//        LOGE("Invalid codec parameters");
+//        return false;
+//    }
+    auto param = codecParams.param;
     // 查找解码器
-    const AVCodec* codec = avcodec_find_decoder(codecParams->codec_id);
+    const AVCodec* codec = avcodec_find_decoder(param->codec_id);
     if (!codec) {
-        LOGE("Could not find decoder : %d", codecParams->codec_id);
+        LOGE("Could not find decoder : %d", param->codec_id);
         return false;
     }
 
@@ -31,7 +31,7 @@ bool FFmpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
         return false;
     }
     // 将参数复制到解码器上下文
-    if (avcodec_parameters_to_context(avCodecContext, codecParams) < 0) {
+    if (avcodec_parameters_to_context(avCodecContext, param) < 0) {
         LOGE("Could not parameters to codecContext");
         return false;
     }
@@ -52,9 +52,10 @@ bool FFmpegAudioDecoder::configure(const AVCodecParameters *codecParams) {
     return true;
 }
 
-int FFmpegAudioDecoder::SendPacket(const AVPacket *packet) {
-    // 发送包到解码器
-    int sendResult = avcodec_send_packet(avCodecContext, packet);
+int FFmpegAudioDecoder::SendPacket(const std::shared_ptr<IMediaPacket>& packet) {
+    // 发送包到解码器'
+    auto mediaPacket = packet->asAVPacket();
+    int sendResult = avcodec_send_packet(avCodecContext, mediaPacket);
     if (sendResult < 0) {
         char errString[128];
         av_strerror(sendResult, errString, 128);
@@ -64,8 +65,9 @@ int FFmpegAudioDecoder::SendPacket(const AVPacket *packet) {
     return sendResult;
 }
 
-int FFmpegAudioDecoder::ReceiveFrame(AVFrame *frame) {
-    int ret = avcodec_receive_frame(avCodecContext, frame);
+int FFmpegAudioDecoder::ReceiveFrame(std::shared_ptr<IMediaFrame>& frame) {
+    auto mediaFrame = frame->asAVFrame();
+    int ret = avcodec_receive_frame(avCodecContext, mediaFrame);
 
     if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
         // 不是错误
@@ -83,4 +85,15 @@ void FFmpegAudioDecoder::release() {
         avcodec_free_context(&avCodecContext);
     }
     isReady = false;
+}
+
+SampleFormat FFmpegAudioDecoder::getSampleFormat() {
+    switch (avCodecContext->sample_fmt) {
+        case AV_SAMPLE_FMT_S16:
+            return SampleFormat::S16;
+        case AV_SAMPLE_FMT_S16P:
+            return SampleFormat::S16P;
+        default:
+            return SampleFormat::UNKNOWN;
+    }
 }

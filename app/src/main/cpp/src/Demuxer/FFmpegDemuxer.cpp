@@ -104,7 +104,6 @@ AVRational FFmpegDemuxer::getTimeBase() const {
 }
 
 int FFmpegDemuxer::ReceivePacket(AVPacket *packet) {
-    // 获取Packet, 并且返回类型
     int ret;
     while (true) {
         ret = av_read_frame(fmt_ctx, packet);

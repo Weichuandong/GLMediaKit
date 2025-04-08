@@ -23,9 +23,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var eglSurfaceView: MediaSurfaceView
     private lateinit var player: Player
 
-    // 视频文件选择请求码
-    private val REQUEST_VIDEO_FILE = 1001
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

@@ -5,7 +5,7 @@
 #ifndef GLMEDIAKIT_IMAGERENDERER_H
 #define GLMEDIAKIT_IMAGERENDERER_H
 
-#include "IRenderer.h"
+#include "interface/IRenderer.h"
 #include <cstdlib>
 #include <cstring>
 #include <GLES3/gl3.h>
