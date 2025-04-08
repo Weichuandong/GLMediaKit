@@ -70,7 +70,7 @@ public class MediaCodecDecoder {
      * @param flag 标志位（如BUFFER_FLAG_KEY_FRAME）
      * @return 是否成功提交
      * */
-    public boolean queueInputBuffer(ByteBuffer buffer, int size, long pts, int flag) {
+    public boolean pushInputBuffer(ByteBuffer buffer, int size, int flag) {
         if (buffer == null) {
             Log.e(tag, "queueInputBuffer,but buffer is null");
             return false;
@@ -94,21 +94,21 @@ public class MediaCodecDecoder {
     /**
      * 获取解码数据
      * @param timeoutUs 超时时间
-     * @return 解码缓冲区索引，或错误码
+     * @return 获取解码后数据
      * */
-    public int dequeOutputBuffer(long timeoutUs) {
-        return decoder.dequeueOutputBuffer(bufferInfo, timeoutUs);
+    public ByteBuffer getOutputBuffer(long timeoutUs) {
+        int outputBufferId = decoder.dequeueOutputBuffer(bufferInfo, timeoutUs);
+        if (outputBufferId >= 0) {
+            ByteBuffer outputBuffer = decoder.getOutputBuffer(outputBufferId);
+            decoder.releaseOutputBuffer(outputBufferId, false);
+            return outputBuffer;
+        }
+        return null;
     }
 
-    /**
-     * 获取解码后缓冲区
-     * @param index 输出缓冲区索引
-     * @return 解码后数据
-     */
-    public ByteBuffer getOutputBuffer(int index) {
-        return decoder.getOutputBuffer(index);
+    public long getPts() {
+        return bufferInfo.presentationTimeUs;
     }
-
     /**
      * 通知EOD
      * */

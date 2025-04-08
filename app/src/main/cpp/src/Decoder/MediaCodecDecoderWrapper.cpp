@@ -8,7 +8,7 @@
 MediaCodecDecoderWrapper::MediaCodecDecoderWrapper() :
     javaVM(nullptr),
     decoderObject(nullptr),
-    surface(false)
+    havaSurface(false)
 {
     initJNI();
 }
@@ -27,30 +27,161 @@ MediaCodecDecoderWrapper::~MediaCodecDecoderWrapper() {
 bool MediaCodecDecoderWrapper::init(const std::string& mimeType, int width, int height,
                                     const uint8_t *sps, int spsSize, const uint8_t *pps,
                                     int ppsSize, bool surface) {
-    return true;
+    if (!decoderObject) {
+        LOGE("decoderObject is null, maybe initJNI failed");
+        return false;
+    }
+    havaSurface = surface;
+
+    // 构造Java层解码器初始化参数
+    JNIEnv* env = getEnv();
+    if (env && initMethod) {
+        jstring jMimeType = env->NewStringUTF(mimeType.c_str());
+
+        // 创建ByteBuffer数组
+        jclass byteBufferClass = env->FindClass("java/nio/ByteBuffer");
+
+        // 创建长度为2的ByteBuffer数组（SPS，PPS）
+        jobjectArray csdsArray = env->NewObjectArray(2, byteBufferClass, nullptr);
+
+        // 添加SPS
+        if (sps && spsSize > 0) {
+            jobject spsByteBuffer = env->CallStaticObjectMethod(
+                    byteBufferClass,
+                    env->GetStaticMethodID(byteBufferClass, "allocateDirect", "(I)Ljava/nio/ByteBuffer;"),
+                    spsSize
+                    );
+            auto* directBufferAddress = static_cast<uint8_t*>(env->GetDirectBufferAddress(spsByteBuffer));
+            if (directBufferAddress) {
+                memcpy(directBufferAddress, sps, spsSize);
+            }
+            // 将position 重置为0
+            env->CallObjectMethod(
+                    spsByteBuffer,
+                    env->GetMethodID(byteBufferClass, "position", "(I)Ljava/nio/Buffer;"),
+                    0
+            );
+            env->SetObjectArrayElement(csdsArray, 0, spsByteBuffer);
+            env->DeleteLocalRef(spsByteBuffer);
+        }
+        // 添加PPS
+        if (pps && ppsSize > 0) {
+            jobject ppsByteBuffer = env->CallStaticObjectMethod(
+                    byteBufferClass,
+                    env->GetStaticMethodID(byteBufferClass, "allocateDirect", "(I)Ljava/nio/ByteBuffer;"),
+                    ppsSize
+                    );
+            auto* directBufferAddress = static_cast<uint8_t*>(env->GetDirectBufferAddress(ppsByteBuffer));
+            if (directBufferAddress) {
+                memcpy(directBufferAddress, pps, ppsSize);
+            }
+            // 将position 重置为0
+            env->CallObjectMethod(
+                    ppsByteBuffer,
+                    env->GetMethodID(byteBufferClass, "position", "(I)Ljava/nio/Buffer;"),
+                    0
+            );
+            env->SetObjectArrayElement(csdsArray, 1, ppsByteBuffer);
+            env->DeleteLocalRef(ppsByteBuffer);
+        }
+
+        // 调用构造方法
+        jboolean rst = env->CallBooleanMethod(decoderObject, initMethod,
+                                              jMimeType, width, height, csdsArray, surface);
+
+        // 清理引用
+        env->DeleteLocalRef(jMimeType);
+        env->DeleteLocalRef(csdsArray);
+        env->DeleteLocalRef(byteBufferClass);
+
+        return (bool)rst;
+    }
+
+    return false;
 }
 
-bool MediaCodecDecoderWrapper::pushEncodedData(const uint8_t *data, size_t size, int64_t pts, int flag) {
+bool MediaCodecDecoderWrapper::pushEncodedData(const uint8_t *data, int size, int flag) {
+    if (!decoderObject) {
+        LOGE("decoderObject is null, maybe initJNI failed");
+        return false;
+    }
+    JNIEnv* env = getEnv();
+    if (env && pushInputBufferMethod) {
+        jclass byteBufferClass = env->FindClass("java/nio/ByteBuffer");
 
+        // 创建ByteBuffer
+        jobject dataBuffer = env->CallStaticObjectMethod(
+                byteBufferClass,
+                env->GetStaticMethodID(byteBufferClass, "allocateDirect", "(I)Ljava/nio/ByteBuffer;"),
+                size
+                );
+        // 复制数据到ByteBuffer
+        auto* directBufferAddress = static_cast<uint8_t*>(env->GetDirectBufferAddress(dataBuffer));
+        if (directBufferAddress) {
+            memcpy(directBufferAddress, data, size);
+        }
 
-    return true;
+        // 调用Java方法
+        jboolean rst = env->CallBooleanMethod(decoderObject, pushInputBufferMethod, dataBuffer, size, flag);
+
+        // 清理引用
+        env->DeleteLocalRef(dataBuffer);
+        env->DeleteLocalRef(byteBufferClass);
+
+        return (bool)rst;
+    }
+
+    return false;
 }
 
 bool MediaCodecDecoderWrapper::getDecodedData(uint8_t *outBuffer, size_t *outSize, int64_t *outPts) {
+    if (!decoderObject) {
+        LOGE("decoderObject is null, maybe initJNI failed");
+        return false;
+    }
+    JNIEnv* env = getEnv();
+    if (env && getOutputBufferMethod) {
+        // 调用Java方法
+        jobject dataBuffer = env->CallObjectMethod(decoderObject, getOutputBufferMethod, (jlong)10000);
 
+        if (!dataBuffer) {
+            // 没有可用输出数据
+            return false;
+        }
+
+        // 获取Buffer信息
+        jclass bufferClass = env->GetObjectClass(dataBuffer);
+
+        // 获取缓冲区大小
+        jmethodID remainingMethod = env->GetMethodID(bufferClass, "remaining", "()I");
+        jint size = env->CallIntMethod(dataBuffer, remainingMethod);
+        if (size <= 0) {
+            LOGE("dataBuffer size <= 0");
+            return false;
+        }
+        *outSize = size;
+
+        // 获取缓冲区中的数据
+        uint8_t* directBuffer = static_cast<uint8_t*>(env->GetDirectBufferAddress(dataBuffer));
+        if (directBuffer && outBuffer) {
+            memcpy(outBuffer, directBuffer, size);
+        } else {
+
+            return false;
+        }
+
+        // 获取时间戳
+        if (outPts) {
+            *outPts = env->CallLongMethod(decoderObject, getPtsMethod);
+        }
+        return true;
+    }
 
     return true;
 }
 
 bool MediaCodecDecoderWrapper::initJNI() {
     // 获取JavaVM
-//    if (javaVM == nullptr) {
-//        jint result = JNI_GetCreatedJavaVMs(&javaVM, 1, nullptr);
-//        if (result != JNI_OK || javaVM == nullptr) {
-//            LOGE("Failed to get javaVM");
-//            return false;
-//        }
-//    }
     if (g_jvm == nullptr) {
         LOGE("JavaVM is null, JNI_OnLoad might not have been called");
         return false;
@@ -72,23 +203,19 @@ bool MediaCodecDecoderWrapper::initJNI() {
         return false;
     }
 
-    // 创建全局应用
-    jclass decoderClass = (jclass)env->NewGlobalRef(localDecoderRef);
-    env->DeleteLocalRef(localDecoderRef);
-
     // 获取构造方法
-    jmethodID constructor = env->GetMethodID(decoderClass, "<init>", "()V");
+    jmethodID constructor = env->GetMethodID(localDecoderRef, "<init>", "()V");
     if (constructor == nullptr) {
         LOGE("Failed to find constructor");
-        env->DeleteGlobalRef(decoderClass);
+        env->DeleteGlobalRef(localDecoderRef);
         return false;
     }
 
     // 创建MediaCodecDecoder对象
-    jobject localObject = env->NewObject(decoderClass, constructor);
+    jobject localObject = env->NewObject(localDecoderRef, constructor);
     if (localObject == nullptr) {
         LOGE("Failed to create decoder object");
-        env->DeleteGlobalRef(decoderClass);
+        env->DeleteGlobalRef(localDecoderRef);
         return false;
     }
 
@@ -96,22 +223,21 @@ bool MediaCodecDecoderWrapper::initJNI() {
     env->DeleteLocalRef(localObject);
 
     // 获取方法ID
-    initMethod = env->GetMethodID(decoderClass, "initialize",
+    initMethod = env->GetMethodID(localDecoderRef, "initialize",
                                   "(Ljava/lang/String;II[Ljava/nio/ByteBuffer;Z)Z");
-    queueInputBufferMethod = env->GetMethodID(decoderClass, "queueInputBuffer",
-                                             "(Ljava/nio/ByteBuffer;IJI)Z");
-    dequeOutputBufferMethod = env->GetMethodID(decoderClass, "dequeOutputBuffer",
-                                               "(J)I");
-    getOutputBufferMethod = env->GetMethodID(decoderClass, "getOutputBuffer",
-                                             "(I)Ljava/nio/ByteBuffer;");
-    signalEndOfInputStreamMethod = env->GetMethodID(decoderClass, "signalEndOfInputStream",
+    pushInputBufferMethod = env->GetMethodID(localDecoderRef, "pushInputBuffer",
+                                             "(Ljava/nio/ByteBuffer;II)Z");
+    getOutputBufferMethod = env->GetMethodID(localDecoderRef, "getOutputBuffer",
+                                             "(J)Ljava/nio/ByteBuffer;");
+    getPtsMethod = env->GetMethodID(localDecoderRef, "getPts",
+                                    "()J");
+    signalEndOfInputStreamMethod = env->GetMethodID(localDecoderRef, "signalEndOfInputStream",
                                                     "()V");
-    releaseMethod = env->GetMethodID(decoderClass, "release",
+    releaseMethod = env->GetMethodID(localDecoderRef, "release",
                                      "()V");
 
-    env->DeleteGlobalRef(decoderClass);
-    return initMethod && queueInputBufferMethod && dequeOutputBufferMethod &&
-            getOutputBufferMethod && signalEndOfInputStreamMethod && releaseMethod;
+    return initMethod && pushInputBufferMethod && getOutputBufferMethod &&
+           signalEndOfInputStreamMethod && releaseMethod;
 }
 
 JNIEnv *MediaCodecDecoderWrapper::getEnv() {
@@ -123,7 +249,6 @@ JNIEnv *MediaCodecDecoderWrapper::getEnv() {
     if (result == JNI_EDETACHED) {
         javaVM->AttachCurrentThread(&env, nullptr);
     }
-
 
     return env;
 }

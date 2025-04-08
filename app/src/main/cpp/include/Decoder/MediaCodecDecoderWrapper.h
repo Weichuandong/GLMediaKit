@@ -24,22 +24,22 @@ public:
               const uint8_t* sps, int spsSize, const uint8_t* pps, int ppsSize,
               bool surface = false);
 
-    bool pushEncodedData(const uint8_t* data, size_t size ,int64_t pts, int flag);
+    bool pushEncodedData(const uint8_t* data, int size, int flag);
 
-    bool getDecodedData(uint8_t* outBuffer, size_t* outSize, int64_t* outPts);
+    bool getDecodedData(uint8_t* outBuffer, size_t* outSize, int64_t *outPts);
 
 private:
     // JNI相关
     JavaVM* javaVM;
     jobject  decoderObject;
     jmethodID initMethod;
-    jmethodID queueInputBufferMethod;
-    jmethodID dequeOutputBufferMethod;
+    jmethodID pushInputBufferMethod;
     jmethodID getOutputBufferMethod;
+    jmethodID getPtsMethod;
     jmethodID signalEndOfInputStreamMethod;
     jmethodID releaseMethod;
 
-    bool surface;
+    bool havaSurface;
 
     // 初始化JNI环境
     bool initJNI();
