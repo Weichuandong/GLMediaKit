@@ -42,10 +42,16 @@ public:
     ~IMediaFrame() = default;
 
     virtual const int64_t getPts() const = 0;
+    // 视频特有属性
+//    virtual const int getWidth() const = 0;
+//    virtual const int getHeight() const = 0;
     virtual const PixFormat getPixFormat() const = 0;
+//
+//    // 音频特有属性
     virtual const SampleFormat getSampleFormat() const = 0;
 
     virtual AVFrame * asAVFrame() = 0;
 };
+
 
 #endif //GLMEDIAKIT_IMEDIADATA_H

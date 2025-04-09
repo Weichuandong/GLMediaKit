@@ -65,7 +65,6 @@ public class MediaCodecDecoder {
     /**
      * 提交编码数据包进行解码
      * @param buffer 编码数据
-     * @param pts 时间戳
      * @param size 数据大小
      * @param flag 标志位（如BUFFER_FLAG_KEY_FRAME）
      * @return 是否成功提交

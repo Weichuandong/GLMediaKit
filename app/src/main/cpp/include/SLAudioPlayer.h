@@ -23,7 +23,8 @@ extern "C" {
 #include "core/SafeQueue.hpp"
 #include "core/IClock.h"
 #include "core/MediaSynchronizer.hpp"
-
+#include "interface/IMediaData.h"
+#include "io/FFmpegFrame.hpp"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "SLAudioPlayer", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "SLAudioPlayer", __VA_ARGS__)
 

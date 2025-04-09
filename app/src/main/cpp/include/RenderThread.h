@@ -12,8 +12,10 @@ extern "C" {
 #include <atomic>
 #include <mutex>
 #include <queue>
+#include <memory>
 
 #include "interface/IRenderer.h"
+#include "interface/IMediaData.h"
 #include "EGL/EGLCore.h"
 #include "core/SafeQueue.hpp"
 #include "core/IClock.h"

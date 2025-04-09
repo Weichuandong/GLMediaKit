@@ -19,12 +19,19 @@ extern "C" {
 
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
+
 #include "Demuxer/FFmpegDemuxer.h"
+
 #include "Decoder/FFmpegAudioDecoder.h"
 #include "Decoder/FFmpegVideoDecoder.h"
-#include "interface/IMediaData.h"
+
+#include "Decoder/MediaCodecVideoDecoder.h"
+
 #include "io/FFmpegPacket.hpp"
 #include "io/FFmpegFrame.hpp"
+#include "io/MediaCodecFrame.hpp"
+
+#include "interface/IMediaData.h"
 #include "interface/IDecoder.h"
 
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegReader", __VA_ARGS__)
@@ -103,6 +110,8 @@ private:
 
     void releaseAudio();
     void releaseVideo();
+
+    bool extractSPSPPS(AVCodecParameters* codecCtx, std::vector<uint8_t>& sps, std::vector<uint8_t>& pps);
 };
 
 #endif //GLMEDIAKIT_FFMPEGREADER_H

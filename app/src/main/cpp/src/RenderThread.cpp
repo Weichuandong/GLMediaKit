@@ -84,16 +84,18 @@ void RenderThread::renderLoop() {
 
         if (renderer) {
             // 取AVFrame
-            AVFrame* frame{nullptr};
-            videoFrameQueue->pop(frame);
+//            std::shared_ptr<IMediaFrame> frame = nullptr;
+            AVFrame* avFrame{nullptr};
+            videoFrameQueue->pop(avFrame);
 
-            if (frame && frame->width && frame->height) {
+//            AVFrame* avFrame = frame->asAVFrame();
+            if (avFrame && avFrame->width && avFrame->height) {
                 // 添加时钟同步逻辑
                 double masterTime = synchronizer ? synchronizer->getCurrentTime() : videoClock.getCurrentTime();
 
                 // 更新视频时钟
-                if (frame->pts != AV_NOPTS_VALUE) {
-                    videoClock.pts = frame->pts * av_q2d(videoTimeBase);
+                if (avFrame->pts != AV_NOPTS_VALUE) {
+                    videoClock.pts = avFrame->pts * av_q2d(videoTimeBase);
                     videoClock.lastUpdateTime = av_gettime() / 1000000.0;
                     synchronizer->update(videoClock, MediaSynchronizer::SyncSource::VIDEO);
                 }
@@ -105,7 +107,7 @@ void RenderThread::renderLoop() {
                 if (diff <= -syncThreshold) {
                     // 视频慢
                     LOGD("video is %lfS slow", fabs(diff));
-                    renderer->onDrawFrame(frame);
+                    renderer->onDrawFrame(avFrame);
 
                     if (diff < -10 * syncThreshold && videoFrameQueue->getSize() > 0) {
                         // 如果视频极其落后
@@ -121,10 +123,10 @@ void RenderThread::renderLoop() {
                     LOGD("video is %lfS fast, sleep %dms", fabs(diff), waitTime);
 
                     std::this_thread::sleep_for(std::chrono::milliseconds(waitTime));
-                    renderer->onDrawFrame(frame);
+                    renderer->onDrawFrame(avFrame);
                 } else {
                     LOGD("audio and video synchronization");
-                    renderer->onDrawFrame(frame);
+                    renderer->onDrawFrame(avFrame);
                 }
             } else {
                 // frame无效

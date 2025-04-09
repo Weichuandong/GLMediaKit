@@ -54,8 +54,14 @@ bool FFMpegReader::open(const std::string &file_path) {
     }
     if (hasVideo()) {
         videoDecoder = std::make_unique<FFmpegVideoDecoder>();
+//        videoDecoder = std::make_unique<MediaCodecVideoDecoder>();
         auto config = DecoderConfig();
+        // 获取SPS，PPS
+//        std::vector<uint8_t> sps, pps;
+//        extractSPSPPS(videoDemuxer->getCodecParameters(), sps, pps);
         config.param = videoDemuxer->getCodecParameters();
+//        config.extraData.emplace("sps", sps);
+//        config.extraData.emplace("pps", pps);
         if (!videoDecoder->configure(config)) {
             LOGE("failed to configure videoDecoder");
             return false;
@@ -257,4 +263,58 @@ void FFMpegReader::releaseVideo() {
     if (videoFrame) {
         av_frame_free(&videoFrame);
     }
+}
+
+bool FFMpegReader::extractSPSPPS(AVCodecParameters *codecParams, std::vector<uint8_t> &sps,
+                                 std::vector<uint8_t> &pps) {
+    if (!codecParams || !codecParams->extradata || codecParams->extradata_size < 7) {
+        LOGE("Invalid extradata");
+        return false;
+    }
+    AVFormatContext* fmt;
+
+    const uint8_t* extradata = codecParams->extradata;
+    int extradata_size = codecParams->extradata_size;
+
+    // 检查是否为AVCC格式（一般mp4容器采用）
+    if (extradata[0] == 1) { // AVCC格式以1开头
+        int offset = 5;      // 跳过版本、profile、compatibility、level和长度字段
+
+        // 获取SPS个数,第六个字节[111......]前三个bit默认为111，后五个bit表示接下来的SPS个数
+        int numSPS = extradata[offset] & 0x1F;
+        offset++;
+        for (int i = 0; i < numSPS; ++i) { //
+            // 读取当前SPS长度, 2字节大端序
+            int lengthSPS = (extradata[offset] << 8) | extradata[offset + 1];
+            offset += 2;
+
+            // 读取SPS, 目前只保留第一个SPS
+            if (i == 0) {
+                sps.assign(extradata + offset, extradata + offset + lengthSPS);
+            }
+            offset += lengthSPS;
+        }
+
+        int numPPS = extradata[offset] & 0x1F;
+        offset++;
+
+        for (int i = 0; i < numPPS; ++i) {
+            // 读取当前PPS长度, 2字节大端序
+            int lengthPPS = (extradata[offset] << 8) | extradata[offset + 1];
+            offset += 2;
+
+            if (i == 0) {
+                pps.assign(extradata + offset, extradata + offset + lengthPPS);
+            }
+            offset += lengthPPS;
+        }
+
+        return !sps.empty() && ! pps.empty();
+    } else if (extradata[0] == 0 && extradata[1] == 0 &&
+               extradata[2] == 0 && extradata[3] == 1){ // 格式为Annex-B(开头是起始码0x00000001)
+
+
+    }
+
+    return false;
 }

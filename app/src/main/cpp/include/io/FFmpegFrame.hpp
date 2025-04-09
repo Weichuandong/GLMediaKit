@@ -6,6 +6,7 @@
 #define GLMEDIAKIT_FFMPEGFRAME_HPP
 
 #include "interface/IMediaData.h"
+#include <memory>
 
 class FFmpegFrame : public IMediaFrame {
 public:
@@ -44,7 +45,22 @@ public:
 
     AVFrame * asAVFrame() override{ return frame;}
 
+    static std::shared_ptr<FFmpegFrame> fromAVFrame(AVFrame* frame) {
+        AVFrame* clone = av_frame_clone(frame);
+        if (!clone) {
+            return nullptr;
+        }
+        av_frame_unref(frame);
+        return std::shared_ptr<FFmpegFrame>(std::make_shared<FFmpegFrame>(clone));
+    }
 private:
     AVFrame* frame;
+};
+
+class FFmpegFrameFactory {
+public:
+    static std::shared_ptr<FFmpegFrame> create(AVFrame* frame) {
+        return FFmpegFrame::fromAVFrame(frame);
+    }
 };
 #endif //GLMEDIAKIT_FFMPEGFRAME_HPP

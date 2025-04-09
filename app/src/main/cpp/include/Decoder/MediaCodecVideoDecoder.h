@@ -11,7 +11,7 @@ class MediaCodecVideoDecoder : public IVideoDecoder {
 public:
     MediaCodecVideoDecoder();
 
-    virtual ~MediaCodecVideoDecoder();
+    virtual ~MediaCodecVideoDecoder() = default;
 
     int SendPacket(const std::shared_ptr<IMediaPacket>& packet) override;
 

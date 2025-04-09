@@ -6,6 +6,7 @@
 #define GLMEDIAKIT_FFMPEGPACKET_HPP
 
 #include "interface/IMediaData.h"
+#include <memory>
 
 class FFmpegPacket : public IMediaPacket {
 public:
@@ -26,8 +27,22 @@ public:
 
     virtual const AVPacket* asAVPacket() const override { return packet; }
 
+    static std::shared_ptr<FFmpegPacket> fromAVPacket(AVPacket* packet) {
+        AVPacket* clone = av_packet_clone(packet);
+        if (!clone) {
+            return nullptr;
+        }
+        av_packet_unref(packet);
+        return std::shared_ptr<FFmpegPacket>(std::make_shared<FFmpegPacket>(clone));
+    }
 private:
     AVPacket* packet;
 };
 
+class FFmpegPacketFactory {
+public:
+    static std::shared_ptr<FFmpegPacket> create(AVPacket* packet) {
+        return FFmpegPacket::fromAVPacket(packet);
+    }
+};
 #endif //GLMEDIAKIT_FFMPEGPACKET_HPP
