@@ -34,7 +34,8 @@ public:
     virtual const size_t getSize() const = 0;
     virtual const int64_t getPts() const = 0;
 
-    virtual const AVPacket* asAVPacket() const = 0;
+    virtual AVPacket* asAVPacket() const = 0;
+    virtual const int64_t getTs() = 0;
 };
 
 class IMediaFrame {
@@ -51,6 +52,8 @@ public:
     virtual const SampleFormat getSampleFormat() const = 0;
 
     virtual AVFrame * asAVFrame() = 0;
+
+    virtual bool createFromYUV420P(const uint8_t* data, int width, int height, int64_t ts) = 0;
 };
 
 

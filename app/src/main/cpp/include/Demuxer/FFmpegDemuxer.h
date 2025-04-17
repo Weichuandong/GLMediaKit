@@ -41,6 +41,7 @@ public:
 
     // for decoder
     AVCodecParameters* getCodecParameters();
+    AVStream* getAVStream() { return fmt_ctx->streams[streamIdx]; }
 
     bool isReadying() const { return isReady; }
     bool hasVideo() const;

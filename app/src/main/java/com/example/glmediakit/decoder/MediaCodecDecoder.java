@@ -1,6 +1,7 @@
 package com.example.glmediakit.decoder;
 
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
@@ -15,7 +16,7 @@ public class MediaCodecDecoder {
     private boolean isStarted = false;
     private boolean isSurfaceMode = false;
     private boolean isAsynMode = false;
-    String tag = "MediaCodecVideoDecoder";
+    String tag = "java_MediaCodecVideoDecoder";
 
     enum decoderStates {Configured, Uninitialized, Error, Flushed, Running, EndOfStream, Released};
 
@@ -40,7 +41,8 @@ public class MediaCodecDecoder {
 
         // 配置格式
         format = MediaFormat.createVideoFormat(mime_type, width, height);
-
+        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+        format.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, width * height);
         // 设置编解码特定数据
         if (csds != null) {
             for (int i = 0; i < csds.length; ++i) {
@@ -53,6 +55,7 @@ public class MediaCodecDecoder {
 //        if (surface) {
 //
 //        }
+
         decoder.configure(format, null, null, 0);
         state = decoderStates.Configured;
 
@@ -69,25 +72,36 @@ public class MediaCodecDecoder {
      * @param flag 标志位（如BUFFER_FLAG_KEY_FRAME）
      * @return 是否成功提交
      * */
-    public boolean pushInputBuffer(ByteBuffer buffer, int size, int flag) {
+    public boolean pushInputBuffer(ByteBuffer buffer, int size, int ts, int flag) {
         if (buffer == null) {
             Log.e(tag, "queueInputBuffer,but buffer is null");
             return false;
         }
-        // 同步模式，获取输入缓冲区
-        int inputBufferIdx = decoder.dequeueInputBuffer(10000);
-        state = decoderStates.Running;
-        if (inputBufferIdx >= 0 ) {
-            ByteBuffer inputBuffer = decoder.getInputBuffer(inputBufferIdx);
-            assert inputBuffer != null;
-            inputBuffer.clear();
-            inputBuffer.put(buffer);
-            decoder.queueInputBuffer(inputBufferIdx, 0, size, 10000, flag);
-            return true;
-        } else {
-           Log.e(tag, "dequeue input buffer failed.");
-           return false;
+        try{
+            // 同步模式，获取输入缓冲区
+            Log.d(tag, "Decoder state before dequeue: " + state);
+            int inputBufferIdx = decoder.dequeueInputBuffer(10000);
+            state = decoderStates.Running;
+            if (inputBufferIdx >= 0 ) {
+                ByteBuffer inputBuffer = decoder.getInputBuffer(inputBufferIdx);
+                assert inputBuffer != null;
+                inputBuffer.clear();
+                inputBuffer.put(buffer);
+                decoder.queueInputBuffer(inputBufferIdx, 0, size, ts, flag);
+                return true;
+            } else {
+                Log.e(tag, "dequeue input buffer failed： " + inputBufferIdx);
+                // -1: TIMEOUT
+                // -2: BUFFER_FLAG_END_OF_STREAM
+                // -3: Buffer取不到，可能是错误
+                return false;
+            }
+        } catch (IllegalStateException e) {
+            Log.e(tag, "Decoder in illegal state", e);
+        } catch (Exception e) {
+            Log.e(tag, "Error push Input Buffer", e);
         }
+        return false;
     }
 
     /**
@@ -95,14 +109,35 @@ public class MediaCodecDecoder {
      * @param timeoutUs 超时时间
      * @return 获取解码后数据
      * */
-    public ByteBuffer getOutputBuffer(long timeoutUs) {
+    public DecodedFrame getOutputBuffer(long timeoutUs) {
         int outputBufferId = decoder.dequeueOutputBuffer(bufferInfo, timeoutUs);
-        if (outputBufferId >= 0) {
-            ByteBuffer outputBuffer = decoder.getOutputBuffer(outputBufferId);
-            decoder.releaseOutputBuffer(outputBufferId, false);
-            return outputBuffer;
+        // 增加详细日志
+        Log.d(tag, "dequeueOutputBuffer 返回: " + outputBufferId +
+                " flags: " + bufferInfo.flags +
+                " size: " + bufferInfo.size);
+
+        if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            MediaFormat format = decoder.getOutputFormat();
+            Log.d(tag, "输出格式变更: " + format);
+            // 处理格式变更
+            return null;
+        } else if (outputBufferId == MediaCodec.INFO_TRY_AGAIN_LATER) {
+            Log.d(tag, "暂无输出可用");
+            return null;
+        } else if (outputBufferId >= 0) {
+            ByteBuffer buffer = decoder.getOutputBuffer(outputBufferId);
+            return new DecodedFrame(buffer, outputBufferId);
         }
         return null;
+    }
+
+    /** 释放输出缓冲区
+     * @param outputBufferId 输出缓冲区Id
+     * @return 是否成功
+     */
+    public boolean releaseOutputBuffer(int outputBufferId) {
+        decoder.releaseOutputBuffer(outputBufferId, false);
+        return true;
     }
 
     public long getPts() {

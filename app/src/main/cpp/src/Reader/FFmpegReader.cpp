@@ -4,7 +4,7 @@
 
 #include "Reader/FFmpegReader.h"
 
-FFMpegReader::FFMpegReader(std::shared_ptr<SafeQueue<AVFrame *>> videoFrameQueue,
+FFmpegReader::FFmpegReader(std::shared_ptr<SafeQueue<AVFrame *>> videoFrameQueue,
                                      std::shared_ptr<SafeQueue<AVFrame *>> audioFrameQueue,
                                      ReaderType type) :
         videoFrameQueue(std::move(videoFrameQueue)),
@@ -20,12 +20,12 @@ FFMpegReader::FFMpegReader(std::shared_ptr<SafeQueue<AVFrame *>> videoFrameQueue
 
 }
 
-FFMpegReader::~FFMpegReader() {
+FFmpegReader::~FFmpegReader() {
     releaseAudio();
     releaseVideo();
 }
 
-bool FFMpegReader::open(const std::string &file_path) {
+bool FFmpegReader::open(const std::string &file_path) {
     filePath = file_path;
 
     // 打开音频
@@ -53,19 +53,26 @@ bool FFMpegReader::open(const std::string &file_path) {
         return false;
     }
     if (hasVideo()) {
-        videoDecoder = std::make_unique<FFmpegVideoDecoder>();
-//        videoDecoder = std::make_unique<MediaCodecVideoDecoder>();
+//        videoDecoder = std::make_unique<FFmpegVideoDecoder>();
+        videoDecoder = std::make_unique<MediaCodecVideoDecoder>();
         auto config = DecoderConfig();
         // 获取SPS，PPS
-//        std::vector<uint8_t> sps, pps;
-//        extractSPSPPS(videoDemuxer->getCodecParameters(), sps, pps);
+        std::vector<uint8_t> sps, pps;
+        extractSPSPPS(videoDemuxer->getCodecParameters(), sps, pps);
+        config.type = "video/avc";
+        config.format = config.fromAVFormat(static_cast<AVPixelFormat>(videoDemuxer->getCodecParameters()->format));
+        config.width = videoDemuxer->getCodecParameters()->width;
+        config.height = videoDemuxer->getCodecParameters()->height;
         config.param = videoDemuxer->getCodecParameters();
-//        config.extraData.emplace("sps", sps);
-//        config.extraData.emplace("pps", pps);
+        config.extraData.emplace("sps", sps);
+        config.extraData.emplace("pps", pps);
         if (!videoDecoder->configure(config)) {
             LOGE("failed to configure videoDecoder");
             return false;
         }
+
+        OpenBsfCtx();
+
     } else {
         releaseVideo();
         videoDemuxer.reset();
@@ -74,30 +81,30 @@ bool FFMpegReader::open(const std::string &file_path) {
     return true;
 }
 
-void FFMpegReader::start() {
+void FFmpegReader::start() {
     if (isRunning()) return;
     exitRequested = false;
     isPaused = false;
     isReady = true;
 
-    if (hasAudio()) audioReadThread = std::thread(&FFMpegReader::audioReadThreadFunc, this);
-    if (hasVideo()) videoReadThread = std::thread(&FFMpegReader::videoReadThreadFunc, this);
+    if (hasAudio()) audioReadThread = std::thread(&FFmpegReader::audioReadThreadFunc, this);
+    if (hasVideo()) videoReadThread = std::thread(&FFmpegReader::videoReadThreadFunc, this);
 }
 
-void FFMpegReader::pause() {
+void FFmpegReader::pause() {
     LOGI("FFmpegReader pause");
     isPaused = true;
     audioFrameQueue->pause();
     videoFrameQueue->pause();
 }
 
-void FFMpegReader::resume() {
+void FFmpegReader::resume() {
     isPaused = false;
     if (hasAudio()) audioPauseCond.notify_all();
     if (hasVideo()) videoPauseCond.notify_all();
 }
 
-void FFMpegReader::stop() {
+void FFmpegReader::stop() {
     exitRequested = true;
     resume();
     LOGI("before flush, videoFrameQueue->getSize() = %d, audioFrameQueue->getSize() = %d",
@@ -118,32 +125,32 @@ void FFMpegReader::stop() {
          videoFrameQueue->getSize(), audioFrameQueue->getSize());
 }
 
-void FFMpegReader::seekTo(double position) {
+void FFmpegReader::seekTo(double position) {
 
 }
 
-bool FFMpegReader::hasVideo() const {
+bool FFmpegReader::hasVideo() const {
     return videoDemuxer->hasVideo();
 }
 
-bool FFMpegReader::hasAudio() const {
+bool FFmpegReader::hasAudio() const {
     return audioDemuxer->hasAudio();
 }
 
-AVRational FFMpegReader::getAudioTimeBase() const {
+AVRational FFmpegReader::getAudioTimeBase() const {
     return audioDemuxer->getTimeBase();
 }
 
-AVRational FFMpegReader::getVideoTimeBase() const {
+AVRational FFmpegReader::getVideoTimeBase() const {
     return videoDemuxer->getTimeBase();
 }
 
-void FFMpegReader::audioReadThreadFunc() {
+void FFmpegReader::audioReadThreadFunc() {
     if (!isReadying()) {
         LOGE("Reader is not ready, exit readThread");
         return;
     }
-    LOGI("FFMpegReader : start audio read thread");
+    LOGI("FFmpegReader : start audio read thread");
 
     auto lastLogTime = std::chrono::steady_clock::now();
     uint16_t audioPacketCount = 0;
@@ -193,17 +200,16 @@ void FFMpegReader::audioReadThreadFunc() {
     }
 }
 
-void FFMpegReader::videoReadThreadFunc() {
+void FFmpegReader::videoReadThreadFunc() {
     if (!isReadying()) {
         LOGE("Reader is not ready, exit readThread");
         return;
     }
-    LOGI("FFMpegReader : start video read thread");
+    LOGI("FFmpegReader : start video read thread");
 
     auto lastLogTime = std::chrono::steady_clock::now();
     uint16_t videoPacketCount = 0;
     uint16_t videoFrameCount = 0;
-
     while (!exitRequested) {
         {
             std::unique_lock<std::mutex> lk(videoMtx);
@@ -216,17 +222,19 @@ void FFMpegReader::videoReadThreadFunc() {
             videoDemuxer->ReceivePacket(videoPacket);
             videoPacketCount++;
             std::shared_ptr<IMediaPacket> mediaPacket = std::make_shared<FFmpegPacket>(videoPacket);
+            ConvertAVCCToAnnexB(mediaPacket->asAVPacket());
             std::shared_ptr<IMediaFrame> mediaFrame = std::make_shared<FFmpegFrame>(videoFrame);
-            if (videoDecoder->SendPacket(mediaPacket) == 0) {
-                while (videoDecoder->ReceiveFrame(mediaFrame) == 0) {
-                    AVFrame* cloneFrame = av_frame_clone(videoFrame);
-                    if (!videoFrameQueue->push(cloneFrame)) {
-                        LOGE("Failed to push frame to audioFrameQueue");
-                        av_frame_unref(cloneFrame);
-                    }
-                    videoFrameCount++;
-                    av_frame_unref(videoFrame);
+            if (videoDecoder->SendPacket(mediaPacket) != 0) {
+                LOGE("SendPacket failed");
+            }
+            while (videoDecoder->ReceiveFrame(mediaFrame) == 0) {
+                AVFrame* cloneFrame = av_frame_clone(videoFrame);
+                if (!videoFrameQueue->push(cloneFrame)) {
+                    LOGE("Failed to push frame to audioFrameQueue");
+                    av_frame_unref(cloneFrame);
                 }
+                videoFrameCount++;
+                av_frame_unref(videoFrame);
             }
 
             av_packet_unref(videoPacket);
@@ -246,7 +254,7 @@ void FFMpegReader::videoReadThreadFunc() {
     }
 }
 
-void FFMpegReader::releaseAudio() {
+void FFmpegReader::releaseAudio() {
     if (audioPacket) {
         av_packet_free(&audioPacket);
     }
@@ -256,7 +264,7 @@ void FFMpegReader::releaseAudio() {
     }
 }
 
-void FFMpegReader::releaseVideo() {
+void FFmpegReader::releaseVideo() {
     if (videoPacket) {
         av_packet_free(&videoPacket);
     }
@@ -265,7 +273,7 @@ void FFMpegReader::releaseVideo() {
     }
 }
 
-bool FFMpegReader::extractSPSPPS(AVCodecParameters *codecParams, std::vector<uint8_t> &sps,
+bool FFmpegReader::extractSPSPPS(AVCodecParameters *codecParams, std::vector<uint8_t> &sps,
                                  std::vector<uint8_t> &pps) {
     if (!codecParams || !codecParams->extradata || codecParams->extradata_size < 7) {
         LOGE("Invalid extradata");
@@ -275,40 +283,45 @@ bool FFMpegReader::extractSPSPPS(AVCodecParameters *codecParams, std::vector<uin
 
     const uint8_t* extradata = codecParams->extradata;
     int extradata_size = codecParams->extradata_size;
+    std::vector<uint8_t> startCode = {0x00, 0x00, 0x00, 0x01};
 
     // 检查是否为AVCC格式（一般mp4容器采用）
     if (extradata[0] == 1) { // AVCC格式以1开头
         int offset = 5;      // 跳过版本、profile、compatibility、level和长度字段
 
-        // 获取SPS个数,第六个字节[111......]前三个bit默认为111，后五个bit表示接下来的SPS个数
-        int numSPS = extradata[offset] & 0x1F;
-        offset++;
-        for (int i = 0; i < numSPS; ++i) { //
-            // 读取当前SPS长度, 2字节大端序
-            int lengthSPS = (extradata[offset] << 8) | extradata[offset + 1];
-            offset += 2;
+        while (true) {
+            // 获取SPS或者PPS个数,第六个字节[111......]前三个bit默认为111，后五个bit表示接下来的SPS或者PPS个数
+            int num = extradata[offset] & 0x1F;
+            offset++;
 
-            // 读取SPS, 目前只保留第一个SPS
-            if (i == 0) {
-                sps.assign(extradata + offset, extradata + offset + lengthSPS);
+            for (int i = 0; i < num; ++i) {
+                // 读取当前SPS或者PPS长度, 2字节大端序
+                int length = (extradata[offset] << 8) | extradata[offset + 1];
+                offset += 2;
+                // 获取类型
+                int type = extradata[offset] & 0x0F;
+
+                // 目前只保留第一个SPS或PPS
+                if (i == 0) {
+                    if (type == 7) {
+                        sps.assign(startCode.begin(), startCode.end());
+                        sps.reserve(4 + length);
+                        sps.insert(sps.end(), extradata + offset, extradata + offset + length);
+                        offset += length;
+                        break;
+                    } else if (type == 8) {
+                        pps.assign(startCode.begin(), startCode.end());
+                        pps.reserve(4 + length);
+                        pps.insert(pps.end(), extradata + offset, extradata + offset + length);
+                        offset += length;
+                        break;
+                    }
+                }
             }
-            offset += lengthSPS;
-        }
-
-        int numPPS = extradata[offset] & 0x1F;
-        offset++;
-
-        for (int i = 0; i < numPPS; ++i) {
-            // 读取当前PPS长度, 2字节大端序
-            int lengthPPS = (extradata[offset] << 8) | extradata[offset + 1];
-            offset += 2;
-
-            if (i == 0) {
-                pps.assign(extradata + offset, extradata + offset + lengthPPS);
+            if (!sps.empty() && !pps.empty()) {
+                break;
             }
-            offset += lengthPPS;
         }
-
         return !sps.empty() && ! pps.empty();
     } else if (extradata[0] == 0 && extradata[1] == 0 &&
                extradata[2] == 0 && extradata[3] == 1){ // 格式为Annex-B(开头是起始码0x00000001)
@@ -317,4 +330,73 @@ bool FFMpegReader::extractSPSPPS(AVCodecParameters *codecParams, std::vector<uin
     }
 
     return false;
+}
+
+int FFmpegReader::ConvertAVCCToAnnexB(AVPacket *packet) {
+    char errString[128];
+    int ret = av_bsf_send_packet(m_absCtx, packet);
+    if (ret != 0) {
+        av_strerror(ret, errString, 128);
+        LOGE("convert packet from avcc to annexb failed when send packet! ret=%d, msg=%s", ret, errString);
+        return ret;
+    }
+
+    ret = av_bsf_receive_packet(m_absCtx, packet);
+    if (ret != 0) {
+        av_strerror(ret, errString, 128);
+        LOGE("convert packet from avcc to annexb failed when receive packet! ret=%d, msg=%s", ret, errString);
+        return ret;
+    }
+
+    return 0;
+}
+
+int FFmpegReader::OpenBsfCtx() {
+    const AVBitStreamFilter *bsFilter = nullptr;
+    AVCodecParameters *codecParameters = nullptr;
+
+    auto videoStream = videoDemuxer->getAVStream();
+
+    auto codecID = videoStream->codecpar->codec_id;
+    auto codecDesc = avcodec_descriptor_get(codecID);
+    if (codecDesc == nullptr) {
+        LOGE("Failed to get codec descriptor for '%s'!", avcodec_get_name(codecID));
+        return -1;
+    }
+
+    // 1. 找到相应解码器的过滤器
+    if (strcasecmp(codecDesc->name, "h264") == 0) {
+        bsFilter = av_bsf_get_by_name("h264_mp4toannexb");
+    } else if (strcasecmp(codecDesc->name, "h265") == 0 || strcasecmp(codecDesc->name, "hevc") == 0) {
+        bsFilter = av_bsf_get_by_name("hevc_mp4toannexb");
+    }
+
+    if (bsFilter == nullptr) {
+        LOGE("Can not get bsf by name");
+        return -1;
+    }
+
+    // 2.过滤器分配内存
+    if (av_bsf_alloc(bsFilter, &m_absCtx) != 0) {
+        LOGE("av_bsf_alloc is failed");
+        return -2;
+    }
+
+    // 3. 添加解码器属性
+    if (videoStream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        codecParameters = videoStream->codecpar;
+    }
+
+    if (avcodec_parameters_copy(m_absCtx->par_in, codecParameters) < 0) {
+        LOGE("avcodec_parameters_copy is failed");
+        return -1;
+    }
+
+    // 4. 初始化过滤器上下文
+    if (av_bsf_init(m_absCtx) < 0) {
+        LOGE("av_bsf_init is failed");
+        return -1;
+    }
+
+    return 0;
 }

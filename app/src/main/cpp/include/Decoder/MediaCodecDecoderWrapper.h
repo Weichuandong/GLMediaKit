@@ -8,6 +8,7 @@
 #include <jni.h>
 #include <string>
 #include <android/log.h>
+#include <vector>
 
 #include "JNIHelper.h"
 
@@ -24,20 +25,26 @@ public:
               const uint8_t* sps, int spsSize, const uint8_t* pps, int ppsSize,
               bool surface = false);
 
-    bool pushEncodedData(const uint8_t* data, int size, int flag);
+    bool pushEncodedData(const uint8_t* data, int size, int ts, int flag);
 
-    bool getDecodedData(uint8_t* outBuffer, size_t* outSize, int64_t *outPts);
+    bool getDecodedData(std::vector<uint8_t>& outBuffer, size_t& outSize, int64_t& outPts, int& bufferId);
 
+    bool releaseOutputBuffer(int outputBufferId);
 private:
     // JNI相关
     JavaVM* javaVM;
     jobject  decoderObject;
+    // MediaCodecDecoder相关方法
     jmethodID initMethod;
     jmethodID pushInputBufferMethod;
     jmethodID getOutputBufferMethod;
+    jmethodID releaseOutputBufferMethod;
     jmethodID getPtsMethod;
     jmethodID signalEndOfInputStreamMethod;
     jmethodID releaseMethod;
+    // DecodedFrame相关方法
+    jmethodID getBufferMethod;
+    jmethodID getOutputBufferIdMethod;
 
     bool havaSurface;
 

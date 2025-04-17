@@ -2,12 +2,15 @@ package com.example.glmediakit;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import androidx.annotation.NonNull;
 
 public class MediaSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceListener mListener = null;
+
+    public Surface surface;
 
     public MediaSurfaceView(Context context) {
         this(context, null);
@@ -27,8 +30,9 @@ public class MediaSurfaceView extends SurfaceView implements SurfaceHolder.Callb
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
+        surface = holder.getSurface();
         if (mListener != null) {
-            mListener.onSurfaceCreated(holder.getSurface());
+            mListener.onSurfaceCreated(surface);
         }
     }
 

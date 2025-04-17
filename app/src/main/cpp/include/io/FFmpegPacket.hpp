@@ -25,7 +25,7 @@ public:
 
     virtual const int64_t getPts() const override { return packet->pts; }
 
-    virtual const AVPacket* asAVPacket() const override { return packet; }
+    virtual AVPacket* asAVPacket() const override { return packet; }
 
     static std::shared_ptr<FFmpegPacket> fromAVPacket(AVPacket* packet) {
         AVPacket* clone = av_packet_clone(packet);
@@ -35,6 +35,11 @@ public:
         av_packet_unref(packet);
         return std::shared_ptr<FFmpegPacket>(std::make_shared<FFmpegPacket>(clone));
     }
+
+    const int64_t getTs() override {
+
+    }
+
 private:
     AVPacket* packet;
 };

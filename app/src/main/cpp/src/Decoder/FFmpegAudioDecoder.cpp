@@ -12,10 +12,6 @@ FFmpegAudioDecoder::~FFmpegAudioDecoder() {
 }
 
 bool FFmpegAudioDecoder::configure(const DecoderConfig& codecParams) {
-//    if (!codecParams) {
-//        LOGE("Invalid codec parameters");
-//        return false;
-//    }
     auto param = codecParams.param;
     // 查找解码器
     const AVCodec* codec = avcodec_find_decoder(param->codec_id);
@@ -54,7 +50,6 @@ bool FFmpegAudioDecoder::configure(const DecoderConfig& codecParams) {
 
 int FFmpegAudioDecoder::SendPacket(const std::shared_ptr<IMediaPacket>& packet) {
     // 发送包到解码器'
-    LOGI("FFmpegAudioDecoder::SendPacket: mediaPacket->use_count = %ld", packet.use_count());
     auto mediaPacket = packet->asAVPacket();
     int sendResult = avcodec_send_packet(avCodecContext, mediaPacket);
     if (sendResult < 0) {
@@ -67,8 +62,6 @@ int FFmpegAudioDecoder::SendPacket(const std::shared_ptr<IMediaPacket>& packet) 
 }
 
 int FFmpegAudioDecoder::ReceiveFrame(std::shared_ptr<IMediaFrame>& frame) {
-    LOGI("FFmpegAudioDecoder::ReceiveFrame. frame->use_count = %ld", frame.use_count());
-
     auto mediaFrame = frame->asAVFrame();
     int ret = avcodec_receive_frame(avCodecContext, mediaFrame);
 

@@ -5,7 +5,7 @@
 #ifndef GLMEDIAKIT_IDECODER_H
 #define GLMEDIAKIT_IDECODER_H
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include "interface/IMediaData.h"
@@ -21,13 +21,32 @@ public:
     std::string type;
 
     // 额外初始化配置
-    std::map<std::string, std::vector<uint8_t>> extraData;
+    std::unordered_map<std::string, std::vector<uint8_t>> extraData;
 
     // 附加参数
-    std::map<std::string, std::string> parameters;
+    std::unordered_map<std::string, std::string> parameters;
 
     // FFmpeg相关配置
     AVCodecParameters* param;
+
+    // 视频宽高
+    int width;
+    int height;
+
+    PixFormat format;
+
+    PixFormat fromAVFormat(AVPixelFormat format1) {
+        switch (format1) {
+            case AV_PIX_FMT_YUV420P:
+                return PixFormat::YUV420P;
+            case AV_PIX_FMT_NV12:
+                return PixFormat::NV12;
+            case AV_PIX_FMT_RGB24:
+                return PixFormat::RGBA24;
+            default:
+                return PixFormat::UNKNOWN;
+        }
+    }
 };
 
 

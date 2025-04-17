@@ -6,6 +6,11 @@
 #define GLMEDIAKIT_MEDIACODECVIDEODECODER_H
 
 #include "interface/IDecoder.h"
+#include "Decoder/MediaCodecDecoderWrapper.h"
+#include <string>
+
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "C++_MediaCodecVideoDecoder", __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "C++_MediaCodecVideoDecoder", __VA_ARGS__)
 
 class MediaCodecVideoDecoder : public IVideoDecoder {
 public:
@@ -28,6 +33,20 @@ public:
     PixFormat getPixFormat() override;
 
 private:
+    DecoderConfig decoderConfig;
+
+    std::unique_ptr<MediaCodecDecoderWrapper> mediaCodecDecoderWrapper;
+
+    std::atomic<bool> ready;
+
+    // 视频属性
+    int mWidth;
+    int mHeight;
+    PixFormat format;
+
+    std::vector<uint8_t> convertAVCCToAnnexB(std::vector<uint8_t>& src);
+    std::vector<uint8_t> convertIDRAVCCToAnnexB(std::vector<uint8_t>& src, std::vector<uint8_t>& sps, std::vector<uint8_t>& pps);
+    bool isIDRFrame(AVPacket* packet);
 
 };
 

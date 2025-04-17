@@ -1,9 +1,6 @@
 package com.example.glmediakit
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -11,17 +8,17 @@ import android.util.Log
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
-import androidx.activity.result.contract.ActivityResultContracts
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var eglSurfaceView: MediaSurfaceView
     private lateinit var player: Player
+    private lateinit var filePath: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.pkVideo).setOnClickListener {
             openVideoPicker();
         }
+
+
     }
     // 在 Activity 中
     private val videoPickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -68,6 +67,9 @@ class MainActivity : AppCompatActivity() {
             contentResolver.openFileDescriptor(uri, "r")?.use {
                 // 将文件描述符转换为路径后传递给 C++ 播放器
                 val path = getVideoPathFromUri(this, uri)
+                if (path != null) {
+                    filePath = path
+                }
                 player.prepare(path)
                 Toast.makeText(this, "已选择视频: $uri", Toast.LENGTH_SHORT).show()
             } ?: run {

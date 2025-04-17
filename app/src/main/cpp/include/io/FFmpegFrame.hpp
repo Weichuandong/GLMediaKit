@@ -53,14 +53,52 @@ public:
         av_frame_unref(frame);
         return std::shared_ptr<FFmpegFrame>(std::make_shared<FFmpegFrame>(clone));
     }
+
+    bool createFromYUV420P(const uint8_t* data, int width, int height, int64_t ts) override {
+        if (!frame) {
+            frame = av_frame_alloc();
+        }
+
+        if (!data) {
+            return false;
+        }
+
+        frame->width = width;
+        frame->height = height;
+        frame->format = AV_PIX_FMT_YUV420P;
+        frame->pts = ts;
+
+        // 分配内存
+        int ret = av_frame_get_buffer(frame, 32);
+        if (ret < 0) {
+            av_frame_free(&frame);
+            return false;
+        }
+        // 确保frame可写
+        ret = av_frame_make_writable(frame);
+        if (ret < 0) {
+            av_frame_free(&frame);
+            return false;
+        }
+        int y_size = width * height;
+        int uv_size = y_size / 4;
+
+
+        memcpy(frame->data[0], data, y_size);
+        memcpy(frame->data[1], data + y_size, uv_size);
+        memcpy(frame->data[2], data + y_size + uv_size, uv_size);
+
+        return true;
+    }
+
 private:
     AVFrame* frame;
 };
 
-class FFmpegFrameFactory {
-public:
-    static std::shared_ptr<FFmpegFrame> create(AVFrame* frame) {
-        return FFmpegFrame::fromAVFrame(frame);
-    }
-};
+//class FFmpegFrameFactory {
+//public:
+//    static std::shared_ptr<FFmpegFrame> create(AVFrame* frame) {
+//        return FFmpegFrame::fromAVFrame(frame);
+//    }
+//};
 #endif //GLMEDIAKIT_FFMPEGFRAME_HPP

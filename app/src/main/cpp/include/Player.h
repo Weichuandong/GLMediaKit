@@ -75,7 +75,7 @@ private:
     std::unique_ptr<IRenderer> renderer;
     std::unique_ptr<RenderThread> renderThread;
     std::unique_ptr<SLAudioPlayer> audioPlayer;
-    std::unique_ptr<FFMpegReader> reader;
+    std::unique_ptr<FFmpegReader> reader;
     std::shared_ptr<MediaSynchronizer> synchronizer;
 
     PlayerState currentState;

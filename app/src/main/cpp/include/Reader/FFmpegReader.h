@@ -37,14 +37,14 @@ extern "C" {
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, "FFmpegReader", __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "FFmpegReader", __VA_ARGS__)
 
-class FFMpegReader {
+class FFmpegReader {
 public:
     enum struct ReaderType { ONLY_VIDEO, ONLY_AUDIO, AUDIO_VIDEO};
 
-    FFMpegReader(std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue,
+    FFmpegReader(std::shared_ptr<SafeQueue<AVFrame*>> videoFrameQueue,
                       std::shared_ptr<SafeQueue<AVFrame*>> audioFrameQueue,
                       ReaderType type = ReaderType::AUDIO_VIDEO);
-    ~FFMpegReader();
+    ~FFmpegReader();
 
     bool open(const std::string& filePath);
 
@@ -64,6 +64,7 @@ public:
     AVRational getVideoTimeBase() const;
     int getVideoWidth() const { return videoDecoder->getWidth(); }
     int getVideoHeight() const { return videoDecoder->getHeight(); }
+
     int getSampleRate() const { return audioDecoder->getSampleRate(); }
     int getChannel() const { return audioDecoder->getChannel(); }
     SampleFormat getSampleFormat() const { return audioDecoder->getSampleFormat(); }
@@ -112,6 +113,10 @@ private:
     void releaseVideo();
 
     bool extractSPSPPS(AVCodecParameters* codecCtx, std::vector<uint8_t>& sps, std::vector<uint8_t>& pps);
+
+    AVBSFContext *m_absCtx = nullptr;
+    int OpenBsfCtx();
+    int ConvertAVCCToAnnexB(AVPacket* packet);
 };
 
 #endif //GLMEDIAKIT_FFMPEGREADER_H
