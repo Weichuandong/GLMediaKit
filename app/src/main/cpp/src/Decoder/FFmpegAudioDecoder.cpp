@@ -89,6 +89,12 @@ SampleFormat FFmpegAudioDecoder::getSampleFormat() {
             return SampleFormat::S16;
         case AV_SAMPLE_FMT_S16P:
             return SampleFormat::S16P;
+        case AV_SAMPLE_FMT_S32:
+            return SampleFormat::S32;
+        case AV_SAMPLE_FMT_S32P:
+            return SampleFormat::S32P;
+        case AV_SAMPLE_FMT_FLTP:
+            return SampleFormat::FLTP;
         default:
             return SampleFormat::UNKNOWN;
     }

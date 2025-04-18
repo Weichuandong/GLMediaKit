@@ -58,6 +58,7 @@ bool FFmpegReader::open(const std::string &file_path) {
         auto config = DecoderConfig();
         // 获取SPS，PPS
         std::vector<uint8_t> sps, pps;
+//        videoDemuxer->getCodecParameters()
         extractSPSPPS(videoDemuxer->getCodecParameters(), sps, pps);
         config.type = "video/avc";
         config.format = config.fromAVFormat(static_cast<AVPixelFormat>(videoDemuxer->getCodecParameters()->format));
@@ -155,6 +156,14 @@ void FFmpegReader::audioReadThreadFunc() {
     auto lastLogTime = std::chrono::steady_clock::now();
     uint16_t audioPacketCount = 0;
     uint16_t audioFrameCount = 0;
+    // 路径记得是安卓端的
+    FILE *outfile = nullptr;
+    if (downAudio) {
+        outfile = fopen("/sdcard/output.pcm", "wb");
+        if (!outfile) {
+            LOGE("无法创建输出文件");
+        }
+    }
 
     while (!exitRequested) {
         {
@@ -173,15 +182,30 @@ void FFmpegReader::audioReadThreadFunc() {
         std::shared_ptr<IMediaPacket> mediaPacket = std::make_shared<FFmpegPacket>(audioPacket);
         std::shared_ptr<IMediaFrame> mediaFrame = std::make_shared<FFmpegFrame>(audioFrame);
         if (audioDecoder->SendPacket(mediaPacket) == 0) {
-            while (audioDecoder->ReceiveFrame(mediaFrame) == 0) {
-                AVFrame* cloneFrame = av_frame_clone(audioFrame);
-                if (!audioFrameQueue->push(cloneFrame)) {
-                    LOGE("Failed to push frame to audioFrameQueue");
-                    av_frame_unref(cloneFrame);
+            LOGE("audioDecoder SendPacket failed");
+        }
+        while (audioDecoder->ReceiveFrame(mediaFrame) == 0) {
+            AVFrame* cloneFrame = av_frame_clone(audioFrame);
+
+            if (downAudio) {
+                int bytes_per_sample = av_get_bytes_per_sample(
+                        static_cast<AVSampleFormat>(audioFrame->format));
+                int is_planar = av_sample_fmt_is_planar(static_cast<AVSampleFormat>(audioFrame->format));
+                if (is_planar) {
+                    for (int s = 0; s < audioFrame->nb_samples; ++s) {
+                        for (int ch = 0; ch < audioFrame->channels; ++ch) {
+                            fwrite(audioFrame->data[ch] + s * bytes_per_sample, 1, bytes_per_sample, outfile);
+                        }
+                    }
                 }
-                audioFrameCount++;
-                av_frame_unref(audioFrame);
             }
+
+            if (!audioFrameQueue->push(cloneFrame)) {
+                LOGE("Failed to push frame to audioFrameQueue");
+                av_frame_unref(cloneFrame);
+            }
+            audioFrameCount++;
+            av_frame_unref(audioFrame);
         }
 
         av_packet_unref(audioPacket);
@@ -197,6 +221,9 @@ void FFmpegReader::audioReadThreadFunc() {
             lastLogTime = now;
             audioPacketCount = audioFrameCount = 0;
         }
+    }
+    if (downAudio) {
+        fclose(outfile);
     }
 }
 
@@ -225,7 +252,7 @@ void FFmpegReader::videoReadThreadFunc() {
             ConvertAVCCToAnnexB(mediaPacket->asAVPacket());
             std::shared_ptr<IMediaFrame> mediaFrame = std::make_shared<FFmpegFrame>(videoFrame);
             if (videoDecoder->SendPacket(mediaPacket) != 0) {
-                LOGE("SendPacket failed");
+                LOGE("VideoDecoder SendPacket failed");
             }
             while (videoDecoder->ReceiveFrame(mediaFrame) == 0) {
                 AVFrame* cloneFrame = av_frame_clone(videoFrame);

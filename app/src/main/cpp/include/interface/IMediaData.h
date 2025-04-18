@@ -20,9 +20,20 @@ enum class PixFormat {
 };
 
 enum class SampleFormat {
-    UNKNOWN,
+    U8 = 0,
     S16,
-    S16P
+    S32,
+    FLT,
+    DBL,
+
+    U8P,
+    S16P,
+    S32P,        ///< signed 32 bits, planar
+    FLTP,        ///< float, planar
+    DBLP,        ///< double, planar
+    S64,         ///< signed 64 bits
+    S64P,        ///< signed 64 bits, planar
+    UNKNOWN = -1
 };
 
 

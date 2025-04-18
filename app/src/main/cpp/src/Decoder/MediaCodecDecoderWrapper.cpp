@@ -190,7 +190,6 @@ bool MediaCodecDecoderWrapper::releaseOutputBuffer(int outputBufferId) {
         return false;
     }
     JNIEnv *env = getEnv();
-    LOGI("MediaCodecDecoderWrapper::getDecodedData start");
     if (env && releaseOutputBufferMethod) {
         // 调用方法通知
 

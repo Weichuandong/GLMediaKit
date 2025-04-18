@@ -10,15 +10,23 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import java.io.File
 import java.io.FileOutputStream
 import java.io.OutputStream
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var eglSurfaceView: MediaSurfaceView
     private lateinit var player: Player
     private lateinit var filePath: String
+
+    private val STORAGE_PERMISSION_CODE = 100
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.pkVideo).setOnClickListener {
+            checkStoragePermission();
             openVideoPicker();
         }
 
@@ -136,6 +145,52 @@ class MainActivity : AppCompatActivity() {
             Log.e("VideoPlayer", "获取路径失败", e)
         }
         return null
+    }
+
+    // 获取权限
+    private fun checkStoragePermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            != PackageManager.PERMISSION_GRANTED) {
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                AlertDialog.Builder(this)
+                    .setTitle("需要存储权限")
+                    .setMessage("此功能需要存储权限才能正常工作")
+                    .setPositiveButton("授权") { _, _ -> requestStoragePermission()}
+                    .setNegativeButton("取消") { dialog, _ -> dialog.dismiss() }
+            } else {
+                requestStoragePermission()
+            }
+        } else {
+            Toast.makeText(this, "已获得存储权限", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun requestStoragePermission() {
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            STORAGE_PERMISSION_CODE
+        )
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "存储权限已授予", Toast.LENGTH_SHORT).show()
+                // 执行需要权限的操作
+            } else {
+                Toast.makeText(this, "存储权限被拒绝", Toast.LENGTH_SHORT).show()
+
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    Toast.makeText(this, "请在设置中手动授予存储权限", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 
     override fun onPause() {

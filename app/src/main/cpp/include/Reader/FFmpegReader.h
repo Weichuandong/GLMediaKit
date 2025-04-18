@@ -16,6 +16,7 @@ extern "C" {
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <cstdio>
 
 #include "core/SafeQueue.hpp"
 #include "core/PerformceTimer.hpp"
@@ -117,6 +118,8 @@ private:
     AVBSFContext *m_absCtx = nullptr;
     int OpenBsfCtx();
     int ConvertAVCCToAnnexB(AVPacket* packet);
+
+    bool downAudio = false;
 };
 
 #endif //GLMEDIAKIT_FFMPEGREADER_H
